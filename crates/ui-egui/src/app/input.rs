@@ -143,6 +143,16 @@ impl SoundApp {
             // are left to the shell.
             let claim = !claimed && sampler_window::is_audio_name(file.path());
             let Some(track) = self.drop_track(pos).filter(|_| claim) else {
+                if let Some(at) = self.timeline_drop_at(pos)
+                    && file.path().is_absolute()
+                    && sampler_window::is_audio_name(file.path())
+                {
+                    match crate::dialogs::unicode(file.path()) {
+                        Ok(path) => crate::import::start(self, json!({"path": path, "at": at})),
+                        Err(e) => self.ui.status = crate::localization::error_text(&e.to_string()),
+                    }
+                    continue;
+                }
                 self.host_drops.push(file);
                 continue;
             };
@@ -159,5 +169,17 @@ impl SoundApp {
                 self.sample_reads.push(sampler_window::SampleRead { track, file });
             }
         }
+    }
+
+    /// Returns the timeline sample under an external file drop, when the drop is inside the
+    /// visible edit area. This lets audio files land at the same position where they were dropped.
+    fn timeline_drop_at(&self, pos: Option<egui::Pos2>) -> Option<i64> {
+        let p = pos?;
+        let [x0, y0, x1, y1] = self.edit_layout.timeline;
+        if p.x < x0 || p.x > x1 || p.y < y0 || p.y > y1 {
+            return None;
+        }
+        let s = self.engine.session();
+        Some((s.edit.zoom.scroll + soundcraft_time::to_samples(f64::from(p.x - x0) * s.edit.zoom.samples_per_px)).max(0))
     }
 }
