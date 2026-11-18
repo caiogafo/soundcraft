@@ -267,7 +267,40 @@ fn counters(app: &mut SoundApp, ui: &mut Ui) {
     ui.painter().rect(r, CornerRadius::same(4), t.counter_bg, Stroke::new(1.0, t.counter_border), StrokeKind::Inside);
     let main_r = Rect::from_min_max(r.min, pos2(r.min.x + 180.0, r.min.y + 44.0));
     let txt = fmt_pos(app, pos, main_fmt);
-    ui.painter().text(pos2(main_r.max.x - 18.0, main_r.center().y), Align2::RIGHT_CENTER, txt, mono(26.0), t.counter_text);
+    let mut locate = None;
+    let mut finish_counter_edit = false;
+    if let Some(text) = app.counter_edit.as_mut() {
+        let id = ui.scope_id().with("main_counter_editor");
+        let mut child = ui.new_child(egui::UiBuilder::new().id_salt(id).max_rect(main_r));
+        child.visuals_mut().override_text_color = Some(t.counter_text);
+        let mut output = egui::TextEdit::singleline(text)
+            .id(id)
+            .frame(egui::Frame::NONE)
+            .font(mono(26.0))
+            .align(Align2::RIGHT_CENTER)
+            .desired_width(main_r.width())
+            .show(&mut child);
+        if !output.response.has_focus() {
+            output.response.request_focus();
+            output.state.cursor.set_char_range(Some(egui::text::CCursorRange::select_all_str(text)));
+            output.state.store(child.ctx(), output.response.id);
+        }
+        let (enter, escape) = child.input(|i| (i.key_pressed(egui::Key::Enter), i.key_pressed(egui::Key::Escape)));
+        if escape {
+            finish_counter_edit = true;
+        } else if enter && output.response.has_focus() {
+            locate = app.engine.session().parse_position(text, main_fmt).ok();
+            finish_counter_edit = locate.is_some();
+        }
+    } else {
+        ui.painter().text(pos2(main_r.max.x - 18.0, main_r.center().y), Align2::RIGHT_CENTER, txt, mono(26.0), t.counter_text);
+    }
+    if finish_counter_edit {
+        app.counter_edit = None;
+    }
+    if let Some(at) = locate {
+        let _ = app.run("transport.locate", json!({"at": at}));
+    }
     let resp = ui.interact(main_r, ui.scope_id().with("main_counter"), Sense::click());
     icons::draw(ui.painter(), Rect::from_center_size(pos2(main_r.max.x - 9.0, main_r.center().y), vec2(10.0, 10.0)), "triangle_down", t.text_dim);
     format_menu(app, &resp, main_fmt, "view.main_counter");

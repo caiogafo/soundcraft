@@ -234,7 +234,7 @@ pub(super) fn draw_rulers(app: &mut SoundApp, ui: &mut Ui, area: Rect, tl: Rect,
                     } else if resp.clicked()
                         && let Some(m) = hit
                     {
-                        let command = if ui.input(|i| i.modifiers.alt) { "markers.delete" } else { "markers.recall" };
+                        let command = if ui.input(|i| i.modifiers.alt || i.modifiers.ctrl) { "markers.delete" } else { "markers.recall" };
                         let _ = app.run(command, json!({"number": m.number}));
                     }
                 }

@@ -64,8 +64,15 @@ const REPEATING: [&str; 3] = ["view.zoom_in", "view.zoom_out", "view.waveform_zo
 pub fn handle(app: &mut SoundApp, ctx: &egui::Context) {
     // Cmd+= and Cmd+0 are Mix/Edit and Quantize to Grid, not egui's built-in interface zoom.
     ctx.options_mut(|o| o.zoom_with_keyboard = false);
-    if ctx.egui_wants_keyboard_input() || app.dialogs.open.is_some() || app.ui.show_preferences {
+    if app.dialogs.open.is_some() || app.ui.show_preferences {
         return;
+    }
+    let wants_keyboard = ctx.egui_wants_keyboard_input();
+    // The numpad multiply key is delivered as a text event by winit/egui. The same also covers
+    // Shift+8 on the main keyboard, while the focus guard keeps it out of text fields.
+    let typed_asterisk = ctx.input(|i| i.events.iter().any(|event| matches!(event, egui::Event::Text(text) if text == "*")));
+    if typed_asterisk && !wants_keyboard && app.counter_edit.is_none() {
+        begin_counter_edit(app);
     }
     // A scripted press is identified by its exact position in this pass's events, not by matching
     // key/modifier values. A fresh host press with the same chord must still run its own action in
@@ -86,6 +93,11 @@ pub fn handle(app: &mut SoundApp, ctx: &egui::Context) {
     // Cmd and Ctrl are separate keys only on macOS (asked at runtime so the web build in a Mac browser agrees).
     let mac = ctx.os() == egui::os::OperatingSystem::Mac;
     for (key, mods, repeat) in events {
+        // Saving remains available while a text field has focus. Other global shortcuts must
+        // stay out of text editing, otherwise typing can trigger commands in the background.
+        if wants_keyboard && command_for(key, mods, mac) != Some("session.save") {
+            continue;
+        }
         if repeat {
             if let Some((id, params)) = repeating_command(key, mods, mac) {
                 let _ = app.run(id, params);
@@ -147,7 +159,12 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             true
         }
         Key::Enter if plain => {
-            let _ = app.run("markers.add", json!({}));
+            if let Ok(result) = app.run("markers.add", json!({}))
+                && let Some(id) = result["id"].as_u64()
+                && let Some(marker) = app.engine.session().markers.iter().find(|m| m.id.0 == id)
+            {
+                app.dialogs.open_rename_marker(marker.id, &marker.name);
+            }
             true
         }
         // Shift+=/- step the Grid value and Alt+Shift+=/- the Nudge value; macOS sends Alt+Shift+= as =, not +.
@@ -191,6 +208,11 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         }
         _ => fixed_more(app, key, m, mac),
     }
+}
+
+fn begin_counter_edit(app: &mut SoundApp) {
+    let s = app.engine.session();
+    app.counter_edit = Some(s.format_position(app.position(), s.edit.main_counter));
 }
 
 /// The rest of [`fixed`]'s keys.
