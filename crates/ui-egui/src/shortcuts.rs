@@ -466,14 +466,10 @@ fn tab_clip(app: &mut SoundApp, back: bool) {
     }
 }
 
-/// Scroll the Edit window so the edit selection's start (or `end`) is in its middle. Returns false, leaving
-/// the key unhandled, when there is only an insertion point.
+/// Scroll the Edit window so the edit selection's start (or `end`) is in its middle.
 fn centre_on_selection(app: &mut SoundApp, end: bool) -> bool {
     let s = app.engine.session();
     let sel = s.edit.selection;
-    if sel.start >= sel.end {
-        return false;
-    }
     let [x0, _, x1, _] = app.edit_layout.timeline;
     let half = f64::from((x1 - x0).max(0.0)) / 2.0 * s.edit.zoom.samples_per_px.max(0.01);
     let at = if end { sel.end } else { sel.start };
@@ -627,7 +623,7 @@ mod tests {
     }
 
     #[test]
-    fn selection_arrows_do_not_scroll_the_mix_window_or_an_insertion_point() {
+    fn selection_arrows_do_not_scroll_the_mix_window() {
         for key in [Key::ArrowLeft, Key::ArrowRight] {
             let mut app = app_with_selection();
             app.ui.window = crate::MainWindow::Mix;
@@ -635,8 +631,8 @@ mod tests {
             assert_eq!(app.engine.session().edit.zoom.scroll, 0);
             app.ui.window = crate::MainWindow::Edit;
             app.run("edit.select", serde_json::json!({"start": 2000, "end": 2000})).unwrap();
-            assert!(!super::fixed_more(&mut app, key, Modifiers::NONE, false));
-            assert_eq!(app.engine.session().edit.zoom.scroll, 0);
+            assert!(super::fixed_more(&mut app, key, Modifiers::NONE, false));
+            assert_eq!(app.engine.session().edit.zoom.scroll, 1500);
         }
     }
 
