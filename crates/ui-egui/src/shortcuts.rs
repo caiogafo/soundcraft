@@ -261,6 +261,16 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run(id, json!({}));
             true
         }
+        // Pro Tools moves the insertion to the end with Up and to the start with Down.
+        // The MIDI editor keeps ownership of plain arrows while the pointer is over its piano roll.
+        Key::ArrowUp | Key::ArrowDown if plain && app.ui.window == MainWindow::Edit && !piano_roll_has_pointer(app) => {
+            let at = {
+                let sel = app.engine.session().edit.selection;
+                if key == Key::ArrowUp { sel.end } else { sel.start }
+            };
+            let _ = app.run("edit.select", json!({"start": at}));
+            true
+        }
         // With an edit selection (a selected clip makes one), Left/Right centre the Edit window on its start/end.
         // Over the piano roll the arrows move its notes instead.
         Key::ArrowLeft | Key::ArrowRight if plain && app.ui.window == MainWindow::Edit && !piano_roll_has_pointer(app) => {
@@ -604,6 +614,15 @@ mod tests {
                     assert_eq!(app.engine.session().edit.zoom.scroll, 123, "{key:?} {modifiers:?}");
                 }
             }
+        }
+    }
+
+    #[test]
+    fn plain_vertical_arrows_move_insertion_to_selection_edges() {
+        for (key, expected) in [(Key::ArrowDown, 2000), (Key::ArrowUp, 4000)] {
+            let mut app = app_with_selection();
+            assert!(super::fixed_more(&mut app, key, Modifiers::NONE, false));
+            assert_eq!(app.engine.session().edit.selection, soundcraft_time::Range::point(expected));
         }
     }
 
