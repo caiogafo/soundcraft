@@ -93,9 +93,17 @@ pub fn handle(app: &mut SoundApp, ctx: &egui::Context) {
     // Cmd and Ctrl are separate keys only on macOS (asked at runtime so the web build in a Mac browser agrees).
     let mac = ctx.os() == egui::os::OperatingSystem::Mac;
     for (key, mods, repeat) in events {
+        let edit_arrow_navigation = app.counter_edit.is_none()
+            && app.ui.window == MainWindow::Edit
+            && matches!(key, Key::ArrowLeft | Key::ArrowRight | Key::ArrowUp | Key::ArrowDown)
+            && !mods.command
+            && !mods.alt
+            && !mods.ctrl
+            && !mods.shift
+            && !piano_roll_has_pointer(app);
         // Saving remains available while a text field has focus. Other global shortcuts must
         // stay out of text editing, otherwise typing can trigger commands in the background.
-        if wants_keyboard && command_for(key, mods, mac) != Some("session.save") {
+        if wants_keyboard && command_for(key, mods, mac) != Some("session.save") && !edit_arrow_navigation {
             continue;
         }
         if repeat {
