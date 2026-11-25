@@ -222,6 +222,21 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("markers.add", json!({}));
             true
         }
+        // The Pro Tools guide assigns the same primary-P chord to Print Score and Auto-Spot.
+        // Resolve it by the active content: MIDI/Instrument selection means Print Score; other
+        // edit contexts mean Auto-Spot Clips. Print Score still goes through its save-path dialog.
+        Key::P if mods_match(Modifiers::COMMAND, m, mac) && !m.alt && !m.shift => {
+            let has_midi = {
+                let s = app.engine.session();
+                s.edit.selected_tracks.iter().any(|id| s.track(*id).is_some_and(|t| t.kind.is_midi()))
+                    || s.edit.selected_clips.iter().any(|id| s.find_clip(*id).is_some_and(|(_, c)| matches!(c.content, soundcraft_model::ClipContent::Midi { .. })))
+            };
+            let id = if has_midi { "file.print_score" } else { "options.auto_spot_clips" };
+            if !crate::menus::invoke_shortcut_dialog(app, id) {
+                let _ = app.run(id, json!({}));
+            }
+            true
+        }
         Key::S if search_chord(m, mac) => {
             let _ = app.run("window.search", json!({}));
             true

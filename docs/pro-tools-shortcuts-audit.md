@@ -65,6 +65,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Clip List category coverage now maps `Cmd/Ctrl+Shift+1/2/3/4` to Audio/MIDI/Video/Clip Groups, `Cmd/Ctrl+Alt+K` to Auto-Created, and `Cmd/Ctrl+Shift+U` to Unused. Unused is defined by audio sources with no timeline clips in the current model.
 - `Cmd/Ctrl+Shift+A` now selects every source and clip visible under the current Clip List name/category filters.
 - Options coverage now includes `Cmd/Ctrl+Shift+J` for Video Track Online and `Cmd/Ctrl+P` for Auto-Spot Clips, backed by the existing video/offline and option-flag commands.
+- The guide's `Cmd/Ctrl+P` conflict between Print Score and Auto-Spot Clips is now resolved by context: selected MIDI/Instrument content opens Print Score, while other edit contexts toggle Auto-Spot Clips.
 - Options coverage now maps `Cmd+Alt+Tab` to the existing Tab-to-Transients flag; the Windows `Ctrl+Alt+Tab` spelling remains subject to the host's primary/Control modifier collapse.
 - Selection coverage now registers the official multi-modifier Move/Halve/Double/Duplicate-and-Extend chords against SoundCraft's existing edit-selection operations; host modifier collapse remains subject to the same platform caveat described below.
 - Selection vertical navigation now covers `Control/Start+P` and `Control/Start+;` for moving the edit selection, plus `Option/Alt+Control/Start+P/;` for removing its top or bottom track; `;` is now a first-class parsed shortcut key.
