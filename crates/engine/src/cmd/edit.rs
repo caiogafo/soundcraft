@@ -72,10 +72,10 @@ pub fn specs() -> Vec<CommandSpec> {
             s.edit.selection = s.edit.timeline_selection;
             Ok(json!({}))
         }),
-        cmd!(noundo "edit.move_selection_left", "Move Edit Left", ["Edit", "Selection"], Some("Cmd+Alt+L"), "{}", always, |e, _| shift_selection(e, -1)),
-        cmd!(noundo "edit.move_selection_right", "Move Edit Right", ["Edit", "Selection"], Some("Cmd+Alt+'"), "{}", always, |e, _| shift_selection(e, 1)),
-        cmd!(noundo "edit.halve_selection", "Halve Edit", ["Edit", "Selection"], None, "{}", always, |e, _| scale_selection(e, 0.5)),
-        cmd!(noundo "edit.double_selection", "Double Edit", ["Edit", "Selection"], None, "{}", always, |e, _| scale_selection(e, 2.0)),
+        cmd!(noundo "edit.move_selection_left", "Move Edit Left", ["Edit", "Selection"], Some("Cmd+Ctrl+Alt+L"), "{}", always, |e, _| shift_selection(e, -1)),
+        cmd!(noundo "edit.move_selection_right", "Move Edit Right", ["Edit", "Selection"], Some("Cmd+Ctrl+Alt+'"), "{}", always, |e, _| shift_selection(e, 1)),
+        cmd!(noundo "edit.halve_selection", "Halve Edit", ["Edit", "Selection"], Some("Cmd+Ctrl+Alt+Shift+L"), "{}", always, |e, _| scale_selection(e, 0.5)),
+        cmd!(noundo "edit.double_selection", "Double Edit", ["Edit", "Selection"], Some("Cmd+Ctrl+Alt+Shift+'"), "{}", always, |e, _| scale_selection(e, 2.0)),
         cmd!(noundo "edit.extend_selection_up", "Extend Edit Up", ["Edit", "Selection"], Some("Ctrl+Shift+P"), "{}", has_tracks, |e, _| extend_tracks(e, -1)),
         cmd!(noundo "edit.extend_selection_down", "Extend Edit Down", ["Edit", "Selection"], Some("Ctrl+Shift+;"), "{}", has_tracks, |e, _| extend_tracks(e, 1)),
         cmd!(noundo "edit.remove_selection_top", "Remove Edit from Top", ["Edit", "Selection"], None, "{}", has_tracks, |e, _| {

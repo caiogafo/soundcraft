@@ -23,7 +23,7 @@ pub fn specs() -> Vec<CommandSpec> {
         toggle!("options.pre_post_roll", "Pre/Post-Roll", ["Options"], Some("Cmd+K"), pre_post_roll),
         toggle!("options.loop_playback", "Loop Playback", ["Options"], Some("Cmd+Shift+L"), loop_playback),
         toggle!("options.link_timeline_edit", "Link Timeline and Edit Selection", ["Options"], Some("Shift+/"), link_timeline_edit),
-        toggle!("options.link_track_edit", "Link Track and Edit Selection", ["Options"], None, link_track_edit),
+        toggle!("options.link_track_edit", "Link Track and Edit Selection", ["Options"], Some("Shift+T"), link_track_edit),
         toggle!("options.insertion_follows_playback", "Insertion Follows Playback", ["Options"], None, insertion_follows_playback),
         toggle!("options.tab_to_transient", "Tab to Transient", ["Options"], Some("Cmd+Alt+Tab"), tab_to_transient),
         toggle!("options.mirrored_midi", "Mirrored MIDI Editing", ["Options"], None, mirrored_midi),

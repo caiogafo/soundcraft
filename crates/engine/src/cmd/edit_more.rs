@@ -53,7 +53,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "edit.cut_pan_automation",
             "Pan Automation",
             ["Edit", "Cut Special"],
-            None,
+            Some("Cmd+Ctrl+Alt+Shift+D"),
             "{tracks?, start?, end?} — cuts pan automation only to the clipboard",
             has_range,
             |e, p| auto_copy(e, p, Lanes::Pan, true, "edit.cut_pan_automation")
@@ -147,7 +147,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "edit.duplicate_extend",
             "Duplicate and Extend Edit",
             ["Edit", "Selection"],
-            None,
+            Some("Cmd+Ctrl+Alt+Shift+D"),
             "{tracks?, start?, end?} — duplicates the selection and extends the selection over the copy",
             has_range,
             duplicate_extend
