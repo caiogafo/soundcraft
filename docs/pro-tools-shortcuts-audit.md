@@ -79,6 +79,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Clip List Alt/Option-click-and-hold now auditions an audio clip through its placed timeline range; for a whole source row it previews the first placed occurrence. Releasing the pointer stops only that audition.
 - Clip List Option-Control/Alt-Start click now spots the source at the edit insertion, targeting the clip's existing track when the row represents a timeline clip.
 - Double-clicking a Clip List timeline row now opens the existing Rename Clip dialog, matching the guide's rename interaction.
+- With Clip List keyboard focus, Delete opens the existing Clear confirmation and Alt/Option+Delete bypasses it; the underlying audio files remain on disk.
 - Options coverage now includes `Shift+J` as the closest Video Track Online toggle and `Cmd/Ctrl+Shift+J` for the same state, plus `Cmd/Ctrl+P` for Auto-Spot Clips, backed by the existing video/offline and option-flag commands.
 - The guide's `Cmd/Ctrl+P` conflict between Print Score and Auto-Spot Clips is now resolved by context: selected MIDI/Instrument content opens Print Score, while other edit contexts toggle Auto-Spot Clips.
 - Options coverage now maps `Cmd+Alt+Tab` to the existing Tab-to-Transients flag; the Windows `Ctrl+Alt+Tab` spelling remains subject to the host's primary/Control modifier collapse.

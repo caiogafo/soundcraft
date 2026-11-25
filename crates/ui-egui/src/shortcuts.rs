@@ -209,6 +209,21 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             app.ui.focus_clip_filter = true;
             true
         }
+        // Clip List focus: Delete removes the selected rows from the session;
+        // Alt/Option+Delete skips the confirmation dialog. Audio files remain
+        // on disk, matching SoundCraft's existing Clear command semantics.
+        Key::Delete if app.engine.session().edit.keyboard_focus == "clips" && !m.command && !m.ctrl && !m.shift => {
+            let (clips, sources) = {
+                let edit = &app.engine.session().edit;
+                (edit.selected_clips.clone(), edit.selected_sources.clone())
+            };
+            if m.alt {
+                let _ = app.run("clip.clear", json!({"clips": clips, "sources": sources, "with_clips": true}));
+            } else {
+                app.dialogs.open_clear(&app.engine, clips, sources);
+            }
+            true
+        }
         // File > Open Most Recent. SoundCraft keeps the same recent-session list used by its
         // File menu; use the newest entry and preserve the normal unsaved-session prompt.
         Key::O if mods_match(Modifiers::COMMAND | Modifiers::SHIFT, m, mac) => {
