@@ -194,6 +194,11 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("view.marker_track_lane", json!({}));
             true
         }
+        // Toggle Marker Follows Edit.
+        Key::Y if m.shift && !m.command && !m.ctrl && !m.alt => {
+            let _ = app.run("options.markers_follow_edit", json!({}));
+            true
+        }
         Key::Equals if m.command && !(mac && m.ctrl) => {
             let _ = app.run("window.toggle_mix_edit", json!({}));
             true
