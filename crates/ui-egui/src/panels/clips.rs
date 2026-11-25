@@ -172,6 +172,12 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
             }
             if resp.clicked() {
                 let mods = ui.input(|i| i.modifiers);
+                if resp.double_clicked() && !whole && !mods.alt && !mods.ctrl && !mods.command && !mods.shift {
+                    if let Some((_, clip)) = app.engine.session().find_clip(ClipId(id)) {
+                        app.dialogs.open_rename_clip(clip.id, &clip.name);
+                    }
+                    continue;
+                }
                 // Pro Tools' Option-Control/Alt-Start click spots the Clip List item at
                 // the current edit insertion. Reuse SoundCraft's placement command; for
                 // a timeline clip, keep its current track as the target when possible.
