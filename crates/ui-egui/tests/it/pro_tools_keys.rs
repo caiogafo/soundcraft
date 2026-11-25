@@ -221,6 +221,22 @@ fn mac_clip_list_batch_rename_uses_the_physical_control_chord() {
 }
 
 #[test]
+fn track_view_arrows_cycle_selected_or_all_tracks() {
+    for (os, cmd) in OSES {
+        let (ctx, mut app) = rig(os);
+        app.run("edit.select", json!({"tracks": ["Kick"]})).unwrap();
+        assert_eq!(app.engine.session().track_by_name("Kick").unwrap().view, "waveform");
+        press(&ctx, &mut app, Key::ArrowRight, Modifiers { ctrl: true, ..cmd });
+        assert_eq!(app.engine.session().track_by_name("Kick").unwrap().view, "blocks", "{os:?}: selected Track View next");
+        press(&ctx, &mut app, Key::ArrowLeft, Modifiers { ctrl: true, ..cmd });
+        assert_eq!(app.engine.session().track_by_name("Kick").unwrap().view, "waveform", "{os:?}: selected Track View previous");
+
+        press(&ctx, &mut app, Key::ArrowRight, Modifiers { alt: true, ctrl: true, ..cmd });
+        assert!(app.engine.session().tracks.iter().any(|track| track.view != "waveform"), "{os:?}: Alt cycles all tracks");
+    }
+}
+
+#[test]
 fn primary_enter_adds_a_marker_without_opening_rename() {
     for (os, cmd) in OSES {
         let (ctx, mut app) = rig(os);

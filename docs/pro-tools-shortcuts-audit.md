@@ -42,6 +42,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Marker option coverage now includes `Shift+Y` for Marker Follows Edit.
 - Marker display coverage now includes the three-modifier `R`/`F` chords for Marker Ruler Lines and Marker Folder Lines.
 - Automation coverage now maps `Cmd/Ctrl+Shift+/` to Trim to Current, `Alt+/` to Glide to Current, `Cmd/Ctrl+Alt+Shift+/` to Trim to All Enabled, and `Alt+Shift+/` to Glide to All Enabled; Current targets the displayed lane while All targets enabled lanes.
+- Track View coverage now maps `Control+Command+Left/Right` (and the Windows/Linux collapsed Start+Control form) to cycle the selected tracks' available views; adding Option/Alt cycles every track.
 - Automation Special Paste coverage now resolves `Cmd+Ctrl+C/X/B/V` (and the corresponding primary Control chord) by the active track view; it routes to All Automation on an automation lane and to Clip Gain on a clip view. The distinct official `Option/Alt+Shift+X` Cut Special > All Automation chord is also registered.
 - The shared `Cmd+Control+B/X/C/V` family is now resolved by the active track view for All Automation, while `Control+Shift+B/X/C` remains Clip Gain; this prevents the command registry from selecting the wrong special-edit family.
 - Vertical-navigation conflict coverage now prioritizes MIDI Record Enable movement on `Ctrl/Cmd+Up/Down` when a MIDI/Instrument track is armed; otherwise the chord remains Track Height.

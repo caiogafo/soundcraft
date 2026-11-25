@@ -618,6 +618,12 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("edit.clip_gain_breakpoint", json!({}));
             true
         }
+        // Pro Tools Track View navigation: Control+Command+Left/Right cycles the views on the
+        // selected tracks; adding Option/Alt applies the same transition to every track.
+        Key::ArrowLeft | Key::ArrowRight if m.command && m.ctrl && !m.shift => {
+            cycle_track_views(app, key == Key::ArrowRight, m.alt);
+            true
+        }
         // Commands Keyboard Focus: toggle the selected track display (Pro Tools' `-`).
         Key::Minus if plain && app.ui.window == MainWindow::Edit => {
             toggle_playlist_view(app);
@@ -758,6 +764,39 @@ fn select_adjacent_playlist(app: &mut SoundApp, next: bool) {
     };
     for (track, index) in targets {
         let _ = app.run("track.playlist_select", json!({"track": track, "index": index}));
+    }
+}
+
+/// Cycle through the ordinary Track View choices exposed by SoundCraft. Plugin automation
+/// remains a valid current view but is not invented as a new choice when the shortcut cycles.
+fn cycle_track_views(app: &mut SoundApp, next: bool, all_tracks: bool) {
+    let targets: Vec<(u64, String)> = {
+        let s = app.engine.session();
+        s.tracks
+            .iter()
+            .filter(|t| all_tracks || s.edit.selected_tracks.contains(&t.id))
+            .map(|t| (t.id.0, t.view.clone()))
+            .collect()
+    };
+    for (id, current) in targets {
+        let Some(track) = app.engine.session().track(soundcraft_model::TrackId(id)) else { continue };
+        let mut views: Vec<&str> = if track.kind.is_midi() {
+            vec!["notes", "regions", "blocks", "volume", "pan", "mute"]
+        } else if track.kind.has_playlist() {
+            vec!["waveform", "blocks", "clip_gain", "playlists", "volume", "pan", "mute"]
+        } else {
+            vec!["volume", "pan", "mute"]
+        };
+        if !views.contains(&current.as_str()) {
+            views.insert(0, current.as_str());
+        }
+        let index = views.iter().position(|view| *view == current).unwrap_or(0);
+        let target = if next {
+            views[(index + 1) % views.len()]
+        } else {
+            views[(index + views.len() - 1) % views.len()]
+        };
+        let _ = app.run("track.view", json!({"track": id, "view": target}));
     }
 }
 
