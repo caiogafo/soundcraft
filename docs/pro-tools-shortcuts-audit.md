@@ -47,6 +47,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Clip Gain coverage now includes the line/info toggles and Clear/Cut/Copy chords.
 - Clip Gain breakpoint coverage now uses the existing gain envelope: `Control+Shift+E` on macOS and the primary `Start/Ctrl+Shift+E` chord on Windows/Linux add a point at the edit insertion while preserving the audible gain at that point.
 - Track insert/send coverage now includes the guide's selected-track toggles: `Shift+A` bypasses all inserts, `Shift+2/3` bypasses A–E/F–J, `Shift+E/C/V/D/W` bypasses EQ/Dynamics/Reverb/Delay/Modulation, `Shift+L/5` mutes sends A–E/F–J, and `Shift+Q` mutes all sends.
+- Track monitoring coverage now makes `Alt+K` alternate record-enabled tracks between Auto Input and Input Only monitoring, instead of only forcing Input Only.
 - Event coverage now includes `Cmd/Ctrl+I` for Identify Beat and `Alt+Shift+Z` for Retrospective Record, backed by the existing Event commands.
 - Group coverage now includes `Cmd/Ctrl+Shift+G` to suspend or restore all groups; `Cmd/Ctrl+G` remains New Group.
 - Clip List coverage now routes `Cmd/Ctrl+Shift+F` to the existing name filter, `Cmd/Ctrl+Shift+D` clears that filter, and `Cmd/Ctrl+Shift+R` opens Auto Rename for selected clips; category/unused filters remain explicitly unimplemented.

@@ -109,16 +109,22 @@ pub fn specs() -> Vec<CommandSpec> {
         cmd!("track.bounce", "Bounce...", ["Track"], Some("Cmd+Alt+Shift+B"), "{tracks?}", has_selection, commit),
         cmd!("track.bypass_inserts", "All", ["Track", "Bypass Inserts"], None, "{tracks?, bypass?: bool}", has_selection, bypass_inserts),
         cmd!("track.mute_sends", "All", ["Track", "Mute Sends"], None, "{tracks?, mute?: bool}", has_selection, mute_sends),
-        cmd!(noundo "track.set_record_to_input_only", "Set Record Tracks to Input Only", ["Track"], Some("Alt+K"), "{}", always, |e, _| {
+        cmd!(noundo "track.set_record_to_input_only", "Toggle Auto/Input Only Monitoring", ["Track"], Some("Alt+K"), "{} — toggles all record-enabled tracks between Auto Input and Input Only monitoring", always, |e, _| {
+            let input_only = e
+                .session()
+                .tracks
+                .iter()
+                .filter(|t| t.mixer.record_arm)
+                .any(|t| !t.mixer.input_monitor);
             let s = e.runtime_session_mut();
             let mut n = 0;
             for t in &mut s.tracks {
                 if t.mixer.record_arm {
-                    t.mixer.input_monitor = true;
+                    t.mixer.input_monitor = input_only;
                     n += 1;
                 }
             }
-            Ok(json!({"tracks": n}))
+            Ok(json!({"tracks": n, "input_only": input_only}))
         }),
         cmd!(noundo "track.scroll_to", "Scroll to Track...", ["Track"], Some("Cmd+Alt+F"), "{track}", has_tracks, |e, p| {
             let t = track_param(e, "track.scroll_to", p, "track")?.ok_or_else(|| bad("track.scroll_to", "`track` required"))?;

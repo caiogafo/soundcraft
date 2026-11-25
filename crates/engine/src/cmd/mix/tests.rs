@@ -426,6 +426,9 @@ fn live_input_states_are_transient_and_survive_document_history() {
     e.execute("track.set_record_to_input_only", &json!({})).unwrap();
     let mixer = &e.session().track(track).unwrap().mixer;
     assert!(mixer.record_arm && mixer.input_monitor);
+    e.execute("track.set_record_to_input_only", &json!({})).unwrap();
+    let mixer = &e.session().track(track).unwrap().mixer;
+    assert!(mixer.record_arm && !mixer.input_monitor);
     assert!(!e.is_dirty(), "live input state is not a document change");
     assert_eq!(e.undo_history(), history, "live input state has no Undo entry");
 
