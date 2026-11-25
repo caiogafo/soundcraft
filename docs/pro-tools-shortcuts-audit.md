@@ -81,6 +81,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Double-clicking a Clip List timeline row now opens the existing Rename Clip dialog, matching the guide's rename interaction.
 - With Clip List keyboard focus, Delete opens the existing Clear confirmation and Alt/Option+Delete bypasses it; the underlying audio files remain on disk.
 - Clicking a Clip List row now activates Clip List keyboard focus, so the Delete behavior is available immediately after selecting a row.
+- Memory Locations now support keyboard focus from a recalled row: Up/Down recalls adjacent locations, Shift extends the selection, Alt jumps to the first/last, Cmd/Ctrl+A selects all, and Delete removes the selected locations. Home/End and Page Up/Down scrolling remain UI gaps because the panel has no independent scroll-selection state yet.
 - Options coverage now includes `Shift+J` as the closest Video Track Online toggle and `Cmd/Ctrl+Shift+J` for the same state, plus `Cmd/Ctrl+P` for Auto-Spot Clips, backed by the existing video/offline and option-flag commands.
 - The guide's `Cmd/Ctrl+P` conflict between Print Score and Auto-Spot Clips is now resolved by context: selected MIDI/Instrument content opens Print Score, while other edit contexts toggle Auto-Spot Clips.
 - Options coverage now maps `Cmd+Alt+Tab` to the existing Tab-to-Transients flag; the Windows `Ctrl+Alt+Tab` spelling remains subject to the host's primary/Control modifier collapse.

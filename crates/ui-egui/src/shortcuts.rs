@@ -156,6 +156,9 @@ fn command_for(key: Key, mods: Modifiers, mac: bool) -> Option<&'static str> {
 /// Keys with context-dependent meaning. Returns true when handled.
 fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
     app.counter_display = None;
+    if memory_locations_key(app, key, m, mac) {
+        return true;
+    }
     let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
     match key {
         // Pro Tools Clip List: select all clips currently visible in the list.
@@ -548,6 +551,52 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         }
         _ => fixed_more(app, key, m, mac),
     }
+}
+
+/// Keyboard navigation for the Memory Locations window. The panel already owns
+/// the recall/delete commands; this keeps the Pro Tools list-navigation model
+/// in UI state without changing the session document.
+fn memory_locations_key(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
+    if !app.ui.show_memory_locations || !app.ui.memory_focus {
+        return false;
+    }
+    let numbers: Vec<u32> = app.engine.session().markers.iter().map(|marker| marker.number).collect();
+    if numbers.is_empty() {
+        return matches!(key, Key::ArrowUp | Key::ArrowDown);
+    }
+    if key == Key::A && mods_match(Modifiers::COMMAND, m, mac) {
+        app.ui.memory_selected = numbers;
+        app.ui.memory_cursor = Some(0);
+        app.ui.memory_anchor = Some(0);
+        return true;
+    }
+    if key == Key::Delete && !m.command && !m.ctrl && !m.alt && !m.shift {
+        let selected = app.ui.memory_selected.clone();
+        for number in selected {
+            let _ = app.run("markers.delete", json!({"number": number}));
+        }
+        app.ui.memory_selected.clear();
+        app.ui.memory_cursor = None;
+        app.ui.memory_anchor = None;
+        return true;
+    }
+    let target = match key {
+        Key::ArrowUp if m.alt => 0,
+        Key::ArrowDown if m.alt => numbers.len() - 1,
+        Key::ArrowUp => app.ui.memory_cursor.unwrap_or(0).saturating_sub(1),
+        Key::ArrowDown => (app.ui.memory_cursor.unwrap_or(0) + 1).min(numbers.len() - 1),
+        _ => return false,
+    };
+    let anchor = app.ui.memory_anchor.unwrap_or_else(|| app.ui.memory_cursor.unwrap_or(target));
+    let extend = m.shift;
+    let (start, end) = if extend || (m.alt && m.shift) { (anchor.min(target), anchor.max(target)) } else { (target, target) };
+    app.ui.memory_selected = numbers[start..=end].to_vec();
+    app.ui.memory_cursor = Some(target);
+    if !extend && !(m.alt && m.shift) {
+        app.ui.memory_anchor = Some(target);
+    }
+    let _ = app.run("markers.recall", json!({"number": numbers[target]}));
+    true
 }
 
 fn begin_counter_edit(app: &mut SoundApp) {

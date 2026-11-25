@@ -1,8 +1,12 @@
 use super::{SoundApp, Ui, json, mono};
 
 /// One recallable memory-location row: number button, editable name, time, length, kind and delete.
-fn memory_location_row(app: &mut SoundApp, ui: &mut Ui, n: u32, name: &str, loc: &str, len: &str, kind: &str) {
+fn memory_location_row(app: &mut SoundApp, ui: &mut Ui, index: usize, n: u32, name: &str, loc: &str, len: &str, kind: &str) {
     if ui.button(n.to_string()).on_hover_text(crate::localization::text("Recall")).clicked() {
+        app.ui.memory_focus = true;
+        app.ui.memory_cursor = Some(index);
+        app.ui.memory_anchor = Some(index);
+        app.ui.memory_selected = vec![n];
         let _ = app.run("markers.recall", json!({"number": n}));
     }
     let key = egui::Id::unique(("mem_name", n));
@@ -55,8 +59,8 @@ pub(crate) fn memory_locations(app: &mut SoundApp, ui: &mut Ui) {
                 ui.label(egui::RichText::new(crate::localization::text(h)).strong());
             }
             ui.end_row();
-            for (n, name, loc, len, kind) in &rows {
-                memory_location_row(app, ui, *n, name, loc, len, kind);
+            for (index, (n, name, loc, len, kind)) in rows.iter().enumerate() {
+                memory_location_row(app, ui, index, *n, name, loc, len, kind);
             }
         });
     });

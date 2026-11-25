@@ -89,6 +89,15 @@ pub struct UiState {
     /// One-frame request used by the Pro Tools Find/Clear Clip List shortcuts.
     #[serde(skip)]
     pub focus_clip_filter: bool,
+    /// Keyboard focus and selection state for the Memory Locations list.
+    #[serde(skip)]
+    pub memory_focus: bool,
+    #[serde(skip)]
+    pub memory_cursor: Option<usize>,
+    #[serde(skip)]
+    pub memory_anchor: Option<usize>,
+    #[serde(skip)]
+    pub memory_selected: Vec<u32>,
     pub show_transport: bool,
     pub show_memory_locations: bool,
     pub show_big_counter: bool,
@@ -175,6 +184,10 @@ impl Default for UiState {
             clip_filter: String::new(),
             clip_filter_kind: "all".into(),
             focus_clip_filter: false,
+            memory_focus: false,
+            memory_cursor: None,
+            memory_anchor: None,
+            memory_selected: Vec::new(),
             show_transport: false,
             show_memory_locations: false,
             show_big_counter: false,
