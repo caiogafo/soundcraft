@@ -274,6 +274,13 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             toggle_selection_folders(app);
             true
         }
+        // Pro Tools' Command+Control+F applies the last crossfade shape
+        // without opening the Fades dialog. SoundCraft's existing fade
+        // command applies the default/last-compatible shape to the selection.
+        Key::F if m.command && m.ctrl && !m.alt && !m.shift => {
+            let _ = app.run("edit.fades_create", json!({}));
+            true
+        }
         // Show/hide the marker track lane.
         Key::U if m.shift && !m.command && !m.ctrl && !m.alt => {
             let _ = app.run("view.marker_track_lane", json!({}));
