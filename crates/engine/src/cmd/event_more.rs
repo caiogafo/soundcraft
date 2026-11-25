@@ -148,7 +148,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "event.retrospective_record",
             "Retrospective Record",
             ["Event"],
-            None,
+            Some("Alt+Shift+Z"),
             "{track?, notes?: [{pitch, start?: position | start_ticks?, length_ticks?: 240, velocity?: 100}]} — turns captured MIDI into a clip (input quantize applies)",
             always,
             retro_record

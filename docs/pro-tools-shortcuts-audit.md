@@ -44,6 +44,8 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Target Playlist coverage now uses the existing target-playlist commands: `Shift+Right` shows the target, `Shift+Left` toggles the recent playlist, and the backslash creation/duplication chords route to the selected-track playlist model. The engine cannot distinguish every Pro Tools “all tracks” scope on keyboards where Control and Command are collapsed by the host.
 - Zoom/Edit Tool coverage now includes `Ctrl/Cmd+E` for Zoom Toggle and the primary-modifier tool family (`1` Zoom, `2` Trim, `3` Selector, `+` Grabber, `5` Scrubber, `6` Pencil, `7` Smart Tool).
 - Clip Gain coverage now includes the line/info toggles and Clear/Cut/Copy chords; adding a breakpoint at the current edit location remains unimplemented because the engine has no equivalent point-insertion command.
+- Track insert/send coverage now includes the guide's selected-track toggles: `Shift+A` bypasses all inserts, `Shift+2/3` bypasses A–E/F–J, `Shift+E/C/V/D/W` bypasses EQ/Dynamics/Reverb/Delay/Modulation, `Shift+L/5` mutes sends A–E/F–J, and `Shift+Q` mutes all sends.
+- Event coverage now includes `Cmd/Ctrl+I` for Identify Beat and `Alt+Shift+Z` for Retrospective Record, backed by the existing Event commands.
 
 ## Completion rule
 
@@ -70,4 +72,5 @@ misleading:
 | Custom Keyboard Shortcuts window | Setup > Keyboard Shortcuts, conflict resolver, presets and export | SoundCraft has a command registry, but no user-editable shortcut-assignment window/preset format equivalent to Pro Tools. |
 | Marker target/priority shortcuts | `Shift+[ / ]`, marker-name/comment priority clicks | SoundCraft maps `Shift+X` to follow the first selected track and `Shift+N` to toggle marker names/comments; it still has no independent target navigation or per-track display-priority state. |
 | Advanced automation editing | Automation write-on-stop, plugin automation dialogs and multi-playlist special paste | SoundCraft now maps Trim/Glide to Current and All Enabled onto its automation lanes; it still has no write-on-stop/plugin-automation state model for those shortcut families. |
+| Plugin insert/send assignment modifiers | Control/Start-click an insert or send; Control/Option-click all tracks | SoundCraft now exposes the selected-track keyboard bypass/mute families, but it has no equivalent insert/send assignment popup or click-modifier matrix. |
 | Numeric-keypad memory recall | `.` + number + `.` / numeric-keypad marker entry | The host exposes logical egui keys without a reliable keypad-vs-main-row distinction; SoundCraft therefore cannot safely assign these without stealing ordinary number-row shortcuts. |
