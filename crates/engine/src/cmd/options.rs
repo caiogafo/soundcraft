@@ -73,7 +73,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "setup.session",
             "Session",
             ["Setup"],
-            Some("Cmd+2"),
+            None,
             "{frame_rate?: '29.97 Drop'…, bit_depth?: 16|24|32f, timecode_start?: position, name?}",
             always,
             session_setup
