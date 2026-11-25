@@ -12,7 +12,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 | Global parameter, toggle, fine-adjust and multi-select shortcuts | Partial | Track, clip, edit-selection and mixer cases exist; plugin, I/O and hardware-specific cases still need their equivalent actions. |
 | Commands Keyboard Focus | Partial | Edit commands are routed in `crates/ui-egui/src/shortcuts.rs`; `-`, `\\`, `Q/W`, `Y/U/I`, `H/J/K`, `6–9` and the existing edit families now use Soundcraft actions. Some Pro Tools-specific view semantics still need reconciliation. |
 | Edit and Mix transport, editing, zoom and selection | Partial | The current command registry covers many standard actions; the audit must still reconcile every Pro Tools modifier family and context. |
-| MIDI note editing | Partial | Piano-roll arrow editing exists; the complete note, velocity, controller and step-input families are not yet reconciled. |
+| MIDI note editing | Partial | Piano-roll arrow editing and the MIDI Operations window exist; the complete note, velocity, controller and Step Input focus families are not yet reconciled. |
 | Clip gain, clip effects, playlists and automation | Partial | Several engine commands exist; shortcut coverage and context ownership are incomplete. |
 | Memory locations and markers | Partial | Recall, add, rename and delete paths exist; every Pro Tools marker/navigation chord is not yet mapped. |
 | Add New Tracks, Clip List, Track List and Groups List | Partial | UI and commands exist for several operations; focus/navigation families still need mapping. |
@@ -27,6 +27,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - `B` invokes Edit > Separate when an Edit selection is available.
 - Keyboard Focus switching now covers `Cmd/Ctrl+Alt+1` (Commands), `+2` (Clip List) and `+3` (Groups List), using the corresponding SoundCraft focus state.
 - Pro Tools Search now accepts `Cmd+Ctrl+S` on macOS and `Ctrl+Shift+S` on Windows/Linux; `Ctrl/Cmd+S` remains session Save.
+- MIDI Operations coverage now includes `Alt+Q`/`Option+Q` to open or close the existing MIDI Operations window on Quantize; the remaining panel-specific keys require equivalent Split Notes/Duration/Step Input focus controls.
 - Arrow navigation, transport shortcuts, marker shortcuts and save/export shortcuts are covered by the existing UI shortcut dispatcher.
 - The Commands Keyboard Focus batch now covers track-view toggle (`-`: waveform/volume and notes/regions), timeline-selection edge display in the main counter (`Q/W`), clip start/sync/end placement (`Y/U/I`, `H/J/K`) and earlier-by-grid nudge (`\\`).
 - The same family now covers edit-boundary audition: `6/8` play to the edit start/end and `7/9` play from the edit start/end.
@@ -60,7 +61,7 @@ misleading:
 | Scrub/Jog/Shuttle | Control/Start-drag, Shuttle Lock numeric chords | No equivalent transport scrub/shuttle mode or host jog state is implemented. |
 | Clip Effects | Option/Alt+6, Command/Control+Option+Control+B/X/C/S | No Clip Effects processing/preset model exists in the SoundCraft clip model. |
 | Elastic Audio | Warp-marker add/move/delete and rendered/real-time toggle | No Elastic Audio event/warp-marker model exists. |
-| MIDI Operations and Step Input | Option/Alt+Q/T/Y/P, numeric duration keys | SoundCraft has MIDI commands and an editor, but no Pro Tools MIDI Operations/Step Input window with these focus semantics. |
+| MIDI Operations and Step Input | Option/Alt+Y, numeric duration keys, panel navigation | SoundCraft has a MIDI Operations window and maps Quantize/Transpose/Duration actions, but it lacks Pro Tools' Split Notes and numeric-keypad Step Input focus model. |
 | Workspace/Browser | Workspace search, browser navigation and drag/drop modifier matrix | No Workspace/Soundbase browser model; ordinary file drag/drop is implemented separately in the Edit window. |
 | Deck/Satellite/ICON control surfaces | Deck, Satellite and hardware-specific modifier shortcuts | No external deck, satellite or ICON control-surface integration exists. |
 | Custom Keyboard Shortcuts window | Setup > Keyboard Shortcuts, conflict resolver, presets and export | SoundCraft has a command registry, but no user-editable shortcut-assignment window/preset format equivalent to Pro Tools. |

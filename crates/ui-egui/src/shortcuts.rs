@@ -181,6 +181,13 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("options.transport_online", json!({}));
             true
         }
+        // Pro Tools: Option/Alt+Q opens or closes MIDI Operations on Quantize.
+        // SoundCraft has the equivalent operation window, so keep its selector aligned.
+        Key::Q if m.alt && !m.command && !m.ctrl && !m.shift => {
+            app.ops.midi_op = "quantize".into();
+            app.ui.show_midi_ops = !app.ui.show_midi_ops;
+            true
+        }
         // Pro Tools: move Keyboard Focus between Commands, Clip List and Groups List.
         // On Linux/Windows egui exposes the physical Control chord as both Ctrl and
         // Command, so `mods_match` keeps this portable without stealing Alt+1-4,

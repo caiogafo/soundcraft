@@ -125,6 +125,19 @@ fn search_uses_the_platform_pro_tools_chord_without_stealing_save() {
 }
 
 #[test]
+fn alt_q_toggles_midi_operations_on_quantize() {
+    for (os, cmd) in OSES {
+        let (ctx, mut app) = rig(os);
+        let alt = Modifiers { alt: true, ..cmd };
+        press(&ctx, &mut app, Key::Q, alt);
+        assert!(app.ui.show_midi_ops, "{os:?}: open MIDI Operations");
+        assert_eq!(app.ops.midi_op, "quantize", "{os:?}: select Quantize");
+        press(&ctx, &mut app, Key::Q, alt);
+        assert!(!app.ui.show_midi_ops, "{os:?}: close MIDI Operations");
+    }
+}
+
+#[test]
 fn commands_focus_shift_p_and_semicolon_extend_the_selection_onto_shown_tracks() {
     for (os, _) in OSES {
         let (ctx, mut app) = rig(os);
