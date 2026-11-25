@@ -104,7 +104,7 @@ pub fn specs() -> Vec<CommandSpec> {
         cmd!("edit.trim_end_to_insertion", "End to Insertion", ["Edit", "Trim"], Some("Alt+Shift+8"), "{tracks?, at?}", has_selection, |e, p| {
             trim_edge(e, p, false)
         }),
-        cmd!("edit.trim_to_file_boundaries", "To File Boundaries", ["Edit", "Trim"], None, "{clips?}", has_selection, trim_to_file),
+        cmd!("edit.trim_to_file_boundaries", "To File Boundaries", ["Edit", "Trim"], Some("Cmd+Ctrl+T"), "{clips?} — trims to both source-file boundaries; separate File Start/File End operations are not currently exposed", has_selection, trim_to_file),
         cmd!("edit.trim_to_fill_selection", "To Fill Selection", ["Edit", "Trim"], None, "{}", has_range, trim_to_fill),
         cmd!("edit.mute_clips", "Mute", ["Edit"], Some("Cmd+M"), "{clips?}", has_selection, mute_clips),
         cmd!(

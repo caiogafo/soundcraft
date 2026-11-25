@@ -162,7 +162,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "edit.space_clips",
             "Space Clips…",
             ["Edit"],
-            None,
+            Some("Alt+Shift+H"),
             "{clips?, gap?: samples|{seconds} (default 0), mode?: end_to_start|start_to_start}",
             has_selection,
             space_clips

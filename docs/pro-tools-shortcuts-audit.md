@@ -50,6 +50,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Track monitoring coverage now makes `Alt+K` alternate record-enabled tracks between Auto Input and Input Only monitoring, instead of only forcing Input Only.
 - View coverage now maps the existing Track Transcription Lane flag to Pro Tools' `Control+Shift+U` chord on macOS; the Linux/Windows primary-modifier collision with Clip List Unused remains documented by the host-modifier limitation.
 - Edit coverage now maps Snap to Next/Previous to macOS `Option+Control+.`/`,`; the Windows `Alt+Start` form remains unavailable while the host collapses the primary Start/Control modifiers.
+- Edit coverage now maps `Option+Shift+H` to Space Clips and `Cmd+Ctrl+T` on macOS to Trim Clip to File Boundaries. Pro Tools' separate File Start (`Cmd+Ctrl+R`) and File End (`Cmd+Ctrl+Y`) operations remain unimplemented because SoundCraft exposes only the combined boundary operation.
 - Event coverage now includes `Cmd/Ctrl+I` for Identify Beat and `Alt+Shift+Z` for Retrospective Record, backed by the existing Event commands.
 - Group coverage now includes `Cmd/Ctrl+Shift+G` to suspend or restore all groups; `Cmd/Ctrl+G` remains New Group.
 - Clip List coverage now routes `Cmd/Ctrl+Shift+F` to the existing name filter, `Cmd/Ctrl+Shift+D` clears that filter, and `Cmd/Ctrl+Shift+R` opens Auto Rename for selected clips; category/unused filters remain explicitly unimplemented.
