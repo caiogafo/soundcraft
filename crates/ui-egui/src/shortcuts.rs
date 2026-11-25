@@ -177,6 +177,13 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             app.ui.show_clip_list = true;
             true
         }
+        // Setup > Keyboard Shortcuts uses physical Control+Shift+K on macOS. On Windows/Linux
+        // the host collapses Pro Tools' physical Start chord into the same event as File >
+        // Export Clips, so leave that primary chord with the export action.
+        Key::K if mac && m.ctrl && !m.command && m.shift && !m.alt => {
+            let _ = crate::menus::run_ui_command(app, "window.shortcuts", &json!({}));
+            true
+        }
         Key::U if mods_match(Modifiers::COMMAND | Modifiers::SHIFT, m, mac) => {
             app.ui.clip_filter_kind = "unused".into();
             app.ui.show_clip_list = true;

@@ -200,6 +200,17 @@ fn primary_p_resolves_print_score_and_auto_spot_by_edit_content() {
 }
 
 #[test]
+fn keyboard_shortcuts_window_keeps_export_clips_primary_chord_free() {
+    let (ctx, mut app) = rig(OperatingSystem::Mac);
+    press(&ctx, &mut app, Key::K, Modifiers { ctrl: true, shift: true });
+    assert!(app.ui.show_shortcuts, "Mac Control+Shift+K opens Keyboard Shortcuts");
+
+    let (ctx, mut app) = rig(OperatingSystem::Nix);
+    press(&ctx, &mut app, Key::K, Modifiers { command: true, shift: true });
+    assert!(app.dialogs.open_name().is_some_and(|name| name == "path"), "primary Ctrl+Shift+K remains Export Clips");
+}
+
+#[test]
 fn primary_enter_adds_a_marker_without_opening_rename() {
     for (os, cmd) in OSES {
         let (ctx, mut app) = rig(os);
