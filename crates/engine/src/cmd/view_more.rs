@@ -124,6 +124,7 @@ pub fn specs() -> Vec<CommandSpec> {
         flag!("view.marker_track_lane", "Track Lane", ["View", "Marker Displays"], "view.marker.track_lane"),
         flag!("view.marker_ruler_lines", "Ruler Lines", ["View", "Marker Displays"], "view.marker.ruler_lines"),
         flag!("view.marker_folder_lines", "Folder Lines", ["View", "Marker Displays"], "view.marker.folder_lines"),
+        flag!("view.marker_comments", "Marker Comments", ["View", "Marker Displays"], "view.marker.comments"),
         flag!("view.marker_ruler_lane_color", "Ruler Lane Color", ["View", "Marker Displays"], "view.marker.ruler_lane_color"),
         flag!("view.marker_track_lane_color", "Track Lane Color", ["View", "Marker Displays"], "view.marker.track_lane_color"),
         // Other displays.

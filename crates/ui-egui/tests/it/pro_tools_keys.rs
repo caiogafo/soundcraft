@@ -183,6 +183,16 @@ fn primary_enter_adds_a_marker_without_opening_rename() {
 }
 
 #[test]
+fn shift_n_toggles_marker_comments_view() {
+    for (os, _) in OSES {
+        let (ctx, mut app) = rig(os);
+        assert!(!app.engine.session().edit.flag("view.marker.comments"), "{os:?}: default names");
+        press(&ctx, &mut app, Key::N, Modifiers::SHIFT);
+        assert!(app.engine.session().edit.flag("view.marker.comments"), "{os:?}: comments");
+    }
+}
+
+#[test]
 fn commands_focus_shift_p_and_semicolon_extend_the_selection_onto_shown_tracks() {
     for (os, _) in OSES {
         let (ctx, mut app) = rig(os);

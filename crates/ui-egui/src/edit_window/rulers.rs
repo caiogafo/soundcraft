@@ -214,7 +214,8 @@ pub(super) fn draw_rulers(app: &mut SoundApp, ui: &mut Ui, area: Rect, tl: Rect,
                         col,
                         Stroke::NONE,
                     ));
-                    painter.text(pos2(x + 8.0, row.center().y), Align2::LEFT_CENTER, &m.name, bold(11.0), t.marker_text);
+                    let label = if s.edit.flag("view.marker.comments") && !m.comments.is_empty() { &m.comments } else { &m.name };
+                    painter.text(pos2(x + 8.0, row.center().y), Align2::LEFT_CENTER, label, bold(11.0), t.marker_text);
                 }
                 // Click on the marker ruler: recall a marker; double-click renames it, or adds one.
                 let resp = ui.interact(row, ui.scope_id().with(("marker_ruler", lane)), Sense::click());

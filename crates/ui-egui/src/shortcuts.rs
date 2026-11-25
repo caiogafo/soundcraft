@@ -245,6 +245,12 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("options.markers_follow_edit", json!({}));
             true
         }
+        // Pro Tools: Shift+N toggles marker names/comments. SoundCraft has a
+        // single marker-ruler display, so the equivalent is a session view flag.
+        Key::N if m.shift && !m.command && !m.ctrl && !m.alt => {
+            let _ = app.run("view.marker_comments", json!({}));
+            true
+        }
         // Pro Tools: show/hide marker ruler and folder lines. These are the
         // three-modifier chords, so they do not conflict with Alt+R zoom or
         // Shift+F's folder-selection command.
