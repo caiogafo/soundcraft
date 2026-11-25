@@ -239,6 +239,17 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("options.markers_follow_edit", json!({}));
             true
         }
+        // Pro Tools: show/hide marker ruler and folder lines. These are the
+        // three-modifier chords, so they do not conflict with Alt+R zoom or
+        // Shift+F's folder-selection command.
+        Key::R if m.command && m.ctrl && m.alt && !m.shift => {
+            let _ = app.run("view.marker_ruler_lines", json!({}));
+            true
+        }
+        Key::F if m.command && m.ctrl && m.alt && !m.shift => {
+            let _ = app.run("view.marker_folder_lines", json!({}));
+            true
+        }
         // Playlist target display and recent-playlist toggle.
         Key::ArrowRight if m.shift && !m.command && !m.ctrl && !m.alt => {
             let _ = app.run("track.show_target_playlist", json!({}));

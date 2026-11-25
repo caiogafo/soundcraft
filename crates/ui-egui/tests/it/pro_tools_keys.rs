@@ -164,6 +164,18 @@ fn alt_y_opens_midi_operations_on_split_notes() {
 }
 
 #[test]
+fn triple_modifier_marker_shortcuts_toggle_ruler_and_folder_lines() {
+    for (os, cmd) in OSES {
+        let (ctx, mut app) = rig(os);
+        let triple = Modifiers { ctrl: true, alt: true, ..cmd };
+        press(&ctx, &mut app, Key::R, triple);
+        assert!(app.engine.session().edit.flag("view.marker.ruler_lines"), "{os:?}: marker ruler lines");
+        press(&ctx, &mut app, Key::F, triple);
+        assert!(app.engine.session().edit.flag("view.marker.folder_lines"), "{os:?}: marker folder lines");
+    }
+}
+
+#[test]
 fn commands_focus_shift_p_and_semicolon_extend_the_selection_onto_shown_tracks() {
     for (os, _) in OSES {
         let (ctx, mut app) = rig(os);
