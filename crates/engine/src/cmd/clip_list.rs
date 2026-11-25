@@ -1,23 +1,35 @@
 //! Clip List commands.
-use super::{CommandSpec, bad, bool_or};
+use super::{CommandSpec, bad, bool_or, str_param};
 
 use crate::{Engine, Result, cmd};
 use serde_json::{Value, json};
-use soundcraft_model::{ClipId, SourceId};
+use soundcraft_model::{ClipContent, ClipId, SourceId};
 use std::collections::BTreeSet;
+use std::fmt::Write as _;
 
 const CLEAR: &str = "clip.clear";
 
 pub fn specs() -> Vec<CommandSpec> {
-    vec![cmd!(
-        "clip.clear",
-        "Clear Clips",
-        [],
-        Some("Cmd+Shift+B"),
-        "{clips?: [id], sources?: [id], with_clips?: bool} — removes clips and audio files from the session (files stay on disk); default: the Clip List selection. A file still used on the timeline needs `with_clips: true`, which removes those clips too",
-        has_list_selection,
-        clear
-    )]
+    vec![
+        cmd!(
+            "clip.clear",
+            "Clear Clips",
+            [],
+            Some("Cmd+Shift+B"),
+            "{clips?: [id], sources?: [id], with_clips?: bool} — removes clips and audio files from the session (files stay on disk); default: the Clip List selection. A file still used on the timeline needs `with_clips: true`, which removes those clips too",
+            has_list_selection,
+            clear
+        ),
+        cmd!(
+            "clip.export_definition",
+            "Export Clip Definition...",
+            ["File", "Export"],
+            Some("Cmd+Shift+Y"),
+            "{path, clips?: [id], sources?: [id], replace?: false} — writes selected Clip List metadata as a tab-separated definition file",
+            has_list_selection,
+            export_definition
+        ),
+    ]
 }
 
 fn has_list_selection(e: &Engine) -> std::result::Result<(), String> {
@@ -61,6 +73,61 @@ fn clear(e: &mut Engine, p: &Value) -> Result<Value> {
     s.edit.selected_clips.retain(|c| !gone.contains(c));
     s.edit.selected_sources.retain(|f| !sources.contains(f));
     Ok(json!({"clips": gone.len(), "sources": sources.len()}))
+}
+
+fn export_definition(e: &mut Engine, p: &Value) -> Result<Value> {
+    let path = str_param(p, "path").ok_or_else(|| bad("clip.export_definition", "`path` required"))?;
+    super::file::refuse_replacing(e, "clip.export_definition", std::path::Path::new(path), p)?;
+    let clips: BTreeSet<ClipId> = p
+        .get("clips")
+        .and_then(|v| serde_json::from_value(v.clone()).ok())
+        .unwrap_or_else(|| e.session().edit.selected_clips.iter().copied().collect());
+    let sources: BTreeSet<SourceId> = p
+        .get("sources")
+        .and_then(|v| serde_json::from_value(v.clone()).ok())
+        .unwrap_or_else(|| e.session().edit.selected_sources.iter().copied().collect());
+    let s = e.session();
+    let mut text = String::from("kind\tid\tname\ttrack\tstart_samples\tlength_samples\tsource\tsource_offset_samples\ttime_reference_samples\n");
+    let mut rows = 0usize;
+    for id in sources {
+        if let Some(src) = s.source(id) {
+            writeln!(text, "source\t{}\t{}\t\t\t\t{}\t\t{}", id.0, definition_field(&src.name), definition_field(&src.path), src.time_reference)
+                .map_err(|err| bad("clip.export_definition", err.to_string()))?;
+            rows += 1;
+        }
+    }
+    for id in clips {
+        let Some((track, clip)) = s.find_clip(id) else { continue };
+        let (source, offset, reference) = match clip.content {
+            ClipContent::Audio { source, offset } => {
+                let src = s.source(source);
+                (src.map(|x| definition_field(&x.name)).unwrap_or_default(), offset, src.map_or(0, |x| x.time_reference))
+            }
+            ClipContent::Video { source, offset } => (s.video(source).map(|x| definition_field(&x.name)).unwrap_or_default(), offset, 0),
+            ClipContent::Midi { .. } => (String::new(), 0, 0),
+        };
+        let track_name = s.track(track).map_or_else(String::new, |t| definition_field(&t.name));
+        writeln!(
+            text,
+            "clip\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            id.0,
+            definition_field(&clip.name),
+            track_name,
+            clip.start,
+            clip.length,
+            source,
+            offset,
+            reference
+        )
+        .map_err(|err| bad("clip.export_definition", err.to_string()))?;
+        rows += 1;
+    }
+    crate::io::write_file(path, text.as_bytes())?;
+    Ok(json!({"path": path, "rows": rows}))
+}
+
+fn definition_field(value: &str) -> String {
+    value.replace(['\t', '\r', '\n'], " ")
 }
 
 #[cfg(test)]
