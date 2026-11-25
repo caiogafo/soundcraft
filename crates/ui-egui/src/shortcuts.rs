@@ -227,6 +227,18 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("options.transport_online", json!({}));
             true
         }
+        // These two Pro Tools chords use a distinct physical Control key on
+        // macOS. On Linux/Windows the host collapses Start/Control into the
+        // primary modifier, where the corresponding chords already have other
+        // Pro Tools actions.
+        Key::P if mac && m.command && m.ctrl && !m.alt && !m.shift => {
+            let _ = app.run("options.dynamic_transport", json!({}));
+            true
+        }
+        Key::T if mac && m.ctrl && m.shift && !m.command && !m.alt => {
+            let _ = app.run("options.keyboard_lock", json!({}));
+            true
+        }
         // Pro Tools: Option/Alt+Q opens or closes MIDI Operations on Quantize.
         // SoundCraft has the equivalent operation window, so keep its selector aligned.
         Key::Q if m.alt && !m.command && !m.ctrl && !m.shift => {
