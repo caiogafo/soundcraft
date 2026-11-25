@@ -67,6 +67,7 @@ impl SoundApp {
             preferences: preferences::PreferencesState::default(),
             focus_mix: false,
             counter_edit: None,
+            counter_display: None,
             edit_scroll_into_view: None,
             mix_scroll_into_view: None,
             synthetic: Vec::new(),

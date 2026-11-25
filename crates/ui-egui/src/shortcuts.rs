@@ -147,6 +147,7 @@ fn command_for(key: Key, mods: Modifiers, mac: bool) -> Option<&'static str> {
 
 /// Keys with context-dependent meaning. Returns true when handled.
 fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
+    app.counter_display = None;
     let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
     match key {
         // Pro Tools: Control+Space pauses; on Linux egui reports the physical
@@ -588,14 +589,14 @@ fn toggle_playlist_view(app: &mut SoundApp) {
     }
 }
 
-/// Display the timeline selection edge in the main counter without destroying a range
-/// selection: both edges are inside the range, so `transport.locate` preserves it.
+/// Display the timeline selection edge in the main counter without moving the edit
+/// insertion or destroying a range selection.
 fn locate_selection_edge(app: &mut SoundApp, end: bool) {
     let at = {
         let s = app.engine.session();
         if end { s.edit.selection.end } else { s.edit.selection.start }
     };
-    let _ = app.run("transport.locate", json!({"at": at}));
+    app.counter_display = Some(at);
 }
 
 /// Commands Focus clip placement shortcuts. `edit.move_clips` interprets `to` as the

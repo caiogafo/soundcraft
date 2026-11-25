@@ -326,6 +326,8 @@ pub struct SoundApp {
     pub(crate) focus_mix: bool,
     /// Text currently being entered into the main counter after pressing `*`.
     pub(crate) counter_edit: Option<String>,
+    /// Temporary counter value requested by Commands Focus Q/W; it does not move the edit insertion.
+    pub(crate) counter_display: Option<soundcraft_time::Samples>,
     /// Scroll Into View: the track each window brings to its top (Edit) or left (Mix) when it
     /// next draws, so a window not on screen catches up when it is shown.
     pub(crate) edit_scroll_into_view: Option<TrackId>,

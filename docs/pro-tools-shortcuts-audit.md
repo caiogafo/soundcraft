@@ -26,7 +26,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Plain Edit key families are dispatched without requiring the `a-z` toggle.
 - `B` invokes Edit > Separate when an Edit selection is available.
 - Arrow navigation, transport shortcuts, marker shortcuts and save/export shortcuts are covered by the existing UI shortcut dispatcher.
-- The Commands Keyboard Focus batch now covers track-view toggle (`-`: waveform/volume and notes/regions), timeline-selection edge locate (`Q/W`), clip start/sync/end placement (`Y/U/I`, `H/J/K`) and earlier-by-grid nudge (`\\`).
+- The Commands Keyboard Focus batch now covers track-view toggle (`-`: waveform/volume and notes/regions), timeline-selection edge display in the main counter (`Q/W`), clip start/sync/end placement (`Y/U/I`, `H/J/K`) and earlier-by-grid nudge (`\\`).
 - The same family now covers edit-boundary audition: `6/8` play to the edit start/end and `7/9` play from the edit start/end.
 - Transport conflicts audited against the official guide: `Ctrl+Space` pauses, `Alt+Space` toggles Transport Online, and `Ctrl+J`/`Cmd+J` toggles Transport Online according to the platform modifier model.
 - Session boundary navigation now covers modified Enter/Return: return to zero, go to session end, and extend the edit selection to either boundary; plain Enter remains marker creation plus name entry.

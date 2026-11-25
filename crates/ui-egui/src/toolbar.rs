@@ -262,7 +262,7 @@ fn counters(app: &mut SoundApp, ui: &mut Ui) {
         let s = app.engine.session();
         (s.edit.main_counter, s.edit.sub_counter.unwrap_or(TimeFormat::Samples), s.edit.selection)
     };
-    let pos = app.position();
+    let pos = app.counter_display.unwrap_or_else(|| app.position());
     let (r, _) = ui.allocate_exact_size(vec2(318.0, 64.0), Sense::hover());
     ui.painter().rect(r, CornerRadius::same(4), t.counter_bg, Stroke::new(1.0, t.counter_border), StrokeKind::Inside);
     let main_r = Rect::from_min_max(r.min, pos2(r.min.x + 180.0, r.min.y + 44.0));
