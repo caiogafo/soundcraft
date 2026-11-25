@@ -49,10 +49,10 @@ fn mods_match(want: Modifiers, got: Modifiers, mac: bool) -> bool {
     want.command == got.command && want.shift == got.shift && want.alt == got.alt && ctrl
 }
 
-/// Cmd+Ctrl+S opens Search on macOS. On Windows/Linux, Ctrl+Shift+S is already
-/// Save As in SoundCraft, so it must not be stolen by Search.
+/// Control+Shift+S opens Search on macOS. On Windows/Linux, Ctrl+Shift+S is
+/// already Save As in SoundCraft, so it must not be stolen by Search.
 fn search_chord(m: Modifiers, mac: bool) -> bool {
-    mac && m.command && m.ctrl
+    mac && m.ctrl && m.shift && !m.command
 }
 
 /// Commands a host auto-repeat runs again, so holding a zoom key keeps zooming (#1377). Every other
@@ -938,7 +938,7 @@ fn digit(key: Key) -> u8 {
 }
 
 /// Shortcut text for display. The registry stores macOS-style strings ("Cmd+N"); off macOS the Cmd
-/// modifier is the Ctrl key. Mac-only Control chords ("Cmd+Ctrl+S") have no key there, so they show nothing.
+/// modifier is the Ctrl key. Mac-only Control chords remain distinct from primary Cmd chords.
 pub fn shortcut_label(s: &str, mac: bool) -> String {
     let has = |m: &str| s.split('+').any(|p| p == m);
     if mac || (!has("Cmd") && !has("Ctrl")) || PC_CTRL_CHORDS.contains(&s) {
@@ -988,7 +988,7 @@ mod label_tests {
 
     #[test]
     fn unchanged_on_mac() {
-        for s in ["Cmd+N", "Cmd+Shift+W", "Cmd+Alt+B", "Shift+R", "Cmd+Ctrl+S"] {
+        for s in ["Cmd+N", "Cmd+Shift+W", "Cmd+Alt+B", "Shift+R", "Ctrl+Shift+S"] {
             assert_eq!(shortcut_label(s, true), s);
         }
     }
@@ -1025,7 +1025,7 @@ mod tests {
         assert!(mods_match(want("Cmd+Ctrl+X"), Modifiers { ctrl: true, ..MAC_CMD }, true));
         assert!(!mods_match(want("Cmd+X"), Modifiers { ctrl: true, ..MAC_CMD }, true), "Cmd+Ctrl+X is not Cut");
         assert!(!search_chord(MAC_CMD, true));
-        assert!(search_chord(Modifiers { ctrl: true, ..MAC_CMD }, true));
+        assert!(search_chord(Modifiers { ctrl: true, shift: true, ..Modifiers::NONE }, true));
     }
 
     #[test]

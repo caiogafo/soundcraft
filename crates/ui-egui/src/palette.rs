@@ -1,4 +1,4 @@
-//! Search: a command palette over every engine and UI command (Window › Search, Cmd+Ctrl+S).
+//! Search: a command palette over every engine and UI command (Window › Search, Control+Shift+S on macOS).
 
 use crate::SoundApp;
 use crate::theme::{Tokens, mono};
