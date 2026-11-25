@@ -243,6 +243,36 @@ fn begin_counter_edit(app: &mut SoundApp) {
 fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
     let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
     match key {
+        // Pro Tools session navigation. Bare Enter remains the marker command handled
+        // by `fixed`; these modified forms are unambiguous navigation variants.
+        Key::Enter if m.shift && !m.alt && !m.command && !m.ctrl => {
+            extend_session_boundary(app, false);
+            true
+        }
+        Key::Enter if m.alt && m.shift && !m.command && !m.ctrl => {
+            extend_session_boundary(app, true);
+            true
+        }
+        Key::Enter if m.ctrl && m.shift && m.command && !m.alt => {
+            extend_session_boundary(app, true);
+            true
+        }
+        Key::Enter if m.command && !m.ctrl && !m.alt && !m.shift => {
+            let _ = app.run("transport.rtz", json!({}));
+            true
+        }
+        Key::Enter if m.ctrl && m.command && !m.alt && !m.shift => {
+            let _ = app.run("transport.go_to_end", json!({}));
+            true
+        }
+        Key::Enter if m.ctrl && !m.command && !m.alt && !m.shift => {
+            let _ = app.run("transport.rtz", json!({}));
+            true
+        }
+        Key::Enter if m.alt && !m.command && !m.ctrl && !m.shift => {
+            let _ = app.run("transport.go_to_end", json!({}));
+            true
+        }
         // Commands Keyboard Focus: toggle the selected audio tracks between the main
         // playlist and the alternate-playlist lanes (Pro Tools' `-`).
         Key::Minus if plain && app.ui.window == MainWindow::Edit => {
@@ -328,6 +358,16 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             None => false,
         },
     }
+}
+
+/// Extend the current edit selection to the start or end of the session.
+fn extend_session_boundary(app: &mut SoundApp, end: bool) {
+    let (sel, boundary) = {
+        let s = app.engine.session();
+        (s.edit.selection, if end { s.content_end() } else { 0 })
+    };
+    let range = if end { soundcraft_time::Range::new(sel.start, boundary.max(sel.start)) } else { soundcraft_time::Range::new(0, sel.end) };
+    let _ = app.run("edit.select", json!({"start": range.start, "end": range.end}));
 }
 
 /// The zoom keys [`fixed`] handles, shared with [`repeating_command`]: T / R zoom the timeline in / out
