@@ -84,6 +84,8 @@ pub struct UiState {
     pub show_clip_list: bool,
     /// Text currently used by the Clip List name filter.
     pub clip_filter: String,
+    /// Pro Tools-compatible Clip List category filter.
+    pub clip_filter_kind: String,
     /// One-frame request used by the Pro Tools Find/Clear Clip List shortcuts.
     #[serde(skip)]
     pub focus_clip_filter: bool,
@@ -171,6 +173,7 @@ impl Default for UiState {
             show_tracks_list: true,
             show_clip_list: true,
             clip_filter: String::new(),
+            clip_filter_kind: "all".into(),
             focus_clip_filter: false,
             show_transport: false,
             show_memory_locations: false,

@@ -13,17 +13,33 @@ enum ClipRow {
 struct ClipRows {
     revision: u64,
     filter: String,
+    kind: String,
     rows: std::sync::Arc<Vec<ClipRow>>,
 }
 
-fn clip_rows(s: &soundcraft_model::Session, needle: &str) -> Vec<ClipRow> {
+fn clip_rows(s: &soundcraft_model::Session, needle: &str, kind: &str) -> Vec<ClipRow> {
     let shown = |name: &str| needle.is_empty() || name.to_lowercase().contains(needle);
+    let source_shown = |src: &soundcraft_model::Source| match kind {
+        "all" | "audio" => true,
+        "unused" => s.clips_using(src.id).next().is_none(),
+        _ => false,
+    };
+    let clip_shown = |c: &soundcraft_model::Clip| match kind {
+        "all" => true,
+        "audio" => c.is_audio(),
+        "midi" => matches!(c.content, soundcraft_model::ClipContent::Midi { .. }),
+        "video" => matches!(c.content, soundcraft_model::ClipContent::Video { .. }),
+        "groups" => c.group.is_some(),
+        "auto" => c.auto_name.is_some(),
+        "unused" => false,
+        _ => true,
+    };
     // Whole files first (bold), then clips on tracks.
     let sources =
-        s.sources.iter().enumerate().filter(|(_, src)| shown(&format!("{} ({}ch)", src.name, src.channels))).map(|(i, _)| ClipRow::Source(i));
+        s.sources.iter().enumerate().filter(|(_, src)| source_shown(src) && shown(&format!("{} ({}ch)", src.name, src.channels))).map(|(i, _)| ClipRow::Source(i));
     let clips =
         s.tracks.iter().enumerate().flat_map(|(track, tr)| {
-            tr.clips().iter().enumerate().filter(|(_, c)| shown(&c.name)).map(move |(clip, _)| ClipRow::Clip { track, clip })
+            tr.clips().iter().enumerate().filter(|(_, c)| clip_shown(c) && shown(&c.name)).map(move |(clip, _)| ClipRow::Clip { track, clip })
         });
     sources.chain(clips).collect()
 }
@@ -39,15 +55,16 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
         app.ui.focus_clip_filter = false;
     }
     let filter = app.ui.clip_filter.clone();
+    let kind = app.ui.clip_filter_kind.clone();
     let needle = filter.to_lowercase();
     let rkey = egui::Id::unique("clip_rows");
     let revision = app.engine.revision;
-    let cached = ui.ctx().memory(|m| m.data.get_temp::<ClipRows>(rkey)).filter(|c| c.revision == revision && c.filter == needle);
+    let cached = ui.ctx().memory(|m| m.data.get_temp::<ClipRows>(rkey)).filter(|c| c.revision == revision && c.filter == needle && c.kind == kind);
     let rows = match cached {
         Some(c) => c.rows,
         None => {
-            let rows = std::sync::Arc::new(clip_rows(app.engine.session(), &needle));
-            ui.ctx().memory_mut(|m| m.data.insert_temp(rkey, ClipRows { revision, filter: needle, rows: rows.clone() }));
+            let rows = std::sync::Arc::new(clip_rows(app.engine.session(), &needle, &kind));
+            ui.ctx().memory_mut(|m| m.data.insert_temp(rkey, ClipRows { revision, filter: needle, kind, rows: rows.clone() }));
             rows
         }
     };
@@ -149,8 +166,8 @@ mod tests {
                 })
                 .collect()
         };
-        assert_eq!(names(clip_rows(&s, "")), ["Kick 1", "Snare 1", "Kick 2", "Tom"]);
-        assert_eq!(names(clip_rows(&s, "kick")), ["Kick 1", "Kick 2"]);
-        assert!(clip_rows(&s, "cowbell").is_empty());
+        assert_eq!(names(clip_rows(&s, "", "all")), ["Kick 1", "Snare 1", "Kick 2", "Tom"]);
+        assert_eq!(names(clip_rows(&s, "kick", "all")), ["Kick 1", "Kick 2"]);
+        assert!(clip_rows(&s, "cowbell", "all").is_empty());
     }
 }
