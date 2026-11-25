@@ -1,4 +1,4 @@
-use super::automation::{automation_id, breakpoint_at, plugin_range, shown_automation};
+use super::automation::{auto_value, automation_id, breakpoint_at, lane_range, plugin_range, shown_automation};
 use super::clips::fade_control_position;
 use super::drag::{drag_snap, fade_curve_drag_value, fade_drag_range, spot_or_run};
 use super::layout::{sample_at, x_of};
@@ -264,8 +264,10 @@ fn start_gesture(app: &mut SoundApp, ui: &mut Ui, c: &LaneCtx<'_>, resp: &egui::
             let i = lane.points.iter().position(|point| point.at == *at)?;
             let previous = i.checked_sub(1).and_then(|j| lane.points.get(j)).map(|point| point.value);
             let next = lane.points.get(i + 1).map(|point| point.value);
-            if mods.alt {
-                if mods.command || mods.ctrl { previous } else { next }
+            if mods.alt && mods.shift {
+                next
+            } else if mods.alt && (mods.command || mods.ctrl) && !mods.shift {
+                previous
             } else {
                 None
             }
@@ -367,7 +369,15 @@ fn lane_click(app: &mut SoundApp, ui: &mut Ui, c: &LaneCtx<'_>, resp: &egui::Res
     } else if resp.clicked() && curve_handle.is_none() {
         match eff {
             Tool::Grabber => {
-                if let Some(c) = &hit {
+                if hit.is_none()
+                    && let Some(param) = auto_view
+                {
+                    let value = automation_breakpoint_value(track, param, at, lane, p, mods);
+                    let _ = app.run(
+                        "automation.set_point",
+                        json!({"track": track.id.0, "param": automation_id(param), "at": at, "value": value}),
+                    );
+                } else if let Some(c) = &hit {
                     let mut ids = if mods.shift { s.edit.selected_clips.iter().map(|x| x.0).collect::<Vec<_>>() } else { Vec::new() };
                     ids.push(c.id.0);
                     let _ = app.run("edit.select", json!({"clips": ids}));
@@ -430,6 +440,18 @@ fn lane_click(app: &mut SoundApp, ui: &mut Ui, c: &LaneCtx<'_>, resp: &egui::Res
             app.ui.show_midi_editor = true;
         }
     }
+}
+
+/// Resolve the Pro Tools breakpoint-writing modifiers against the existing lane.
+fn automation_breakpoint_value(track: &Track, param: &AutoParam, at: Samples, lane: Rect, p: Pos2, mods: egui::Modifiers) -> f32 {
+    let neighbor = if mods.alt && mods.shift {
+        track.lane(param).and_then(|l| l.points.iter().find(|point| point.at > at)).map(|point| point.value)
+    } else if mods.alt && (mods.command || mods.ctrl) && !mods.shift {
+        track.lane(param).and_then(|l| l.points.iter().rev().find(|point| point.at < at)).map(|point| point.value)
+    } else {
+        None
+    };
+    neighbor.unwrap_or_else(|| auto_value(lane, lane_range(track, param), p.y))
 }
 
 /// Handle one track lane: clip context menus, drag-and-drop sources, sampler drops, and the active tool's selection,
