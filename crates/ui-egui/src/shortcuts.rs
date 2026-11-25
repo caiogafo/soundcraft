@@ -268,6 +268,13 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("options.transport_online", json!({}));
             true
         }
+        // Pro Tools' Shift+J cycles Video Track Online. SoundCraft has one
+        // session-wide picture-online state, so the closest equivalent is its
+        // direct toggle; the per-visible-track cycle remains unavailable.
+        Key::J if m.shift && !m.command && !m.ctrl && !m.alt => {
+            let _ = app.run("video.online", json!({}));
+            true
+        }
         // Selection › Move Edit Up/Down uses the physical Control key on
         // macOS and the primary Start/Ctrl chord on Windows/Linux.
         Key::P | Key::Semicolon if m.ctrl && !m.alt && !m.shift && (!mac || !m.command) => {
