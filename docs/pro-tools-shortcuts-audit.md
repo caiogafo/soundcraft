@@ -10,7 +10,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 | Pro Tools guide section | Soundcraft status | Notes |
 | --- | --- | --- |
 | Global parameter, toggle, fine-adjust and multi-select shortcuts | Partial | Track, clip, edit-selection and mixer cases exist; plugin, I/O and hardware-specific cases still need their equivalent actions. |
-| Commands Keyboard Focus | Partial | Edit commands are routed in `crates/ui-egui/src/shortcuts.rs`; `-`, `\\`, `Q/W`, `Y/U/I`, `H/J/K` and the existing edit families now use Soundcraft actions. The play-to/play-from boundary variants and some Pro Tools-specific view semantics still need reconciliation. |
+| Commands Keyboard Focus | Partial | Edit commands are routed in `crates/ui-egui/src/shortcuts.rs`; `-`, `\\`, `Q/W`, `Y/U/I`, `H/J/K`, `6–9` and the existing edit families now use Soundcraft actions. Some Pro Tools-specific view semantics still need reconciliation. |
 | Edit and Mix transport, editing, zoom and selection | Partial | The current command registry covers many standard actions; the audit must still reconcile every Pro Tools modifier family and context. |
 | MIDI note editing | Partial | Piano-roll arrow editing exists; the complete note, velocity, controller and step-input families are not yet reconciled. |
 | Clip gain, clip effects, playlists and automation | Partial | Several engine commands exist; shortcut coverage and context ownership are incomplete. |
@@ -27,6 +27,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - `B` invokes Edit > Separate when an Edit selection is available.
 - Arrow navigation, transport shortcuts, marker shortcuts and save/export shortcuts are covered by the existing UI shortcut dispatcher.
 - The Commands Keyboard Focus batch now covers playlist display (`-`), timeline-selection edge locate (`Q/W`), clip start/sync/end placement (`Y/U/I`, `H/J/K`) and earlier-by-grid nudge (`\\`).
+- The same family now covers edit-boundary audition: `6/8` play to the edit start/end and `7/9` play from the edit start/end.
 
 ## Completion rule
 
