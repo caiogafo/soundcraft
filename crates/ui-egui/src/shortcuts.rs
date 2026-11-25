@@ -322,6 +322,12 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("view.zoom_preset", json!({"preset": digit(key)}));
             true
         }
+        // Pro Tools' MIDI Record Enable navigation takes priority when a MIDI/Instrument
+        // track is armed; otherwise the same chord changes track height.
+        Key::ArrowUp | Key::ArrowDown if (m.ctrl || mods_match(Modifiers::COMMAND, m, mac)) && !m.alt && !m.shift && midi_record_enabled(app) => {
+            move_midi_record_enable(app, key == Key::ArrowDown);
+            true
+        }
         // Pro Tools' Control+Up/Down track height, on Ctrl off macOS too (its Start key isn't available there).
         Key::ArrowUp | Key::ArrowDown if m.ctrl && (m.alt || !m.shift) => {
             let s = app.engine.session();
@@ -456,6 +462,30 @@ fn track_is_in_folder(s: &soundcraft_model::Session, track: soundcraft_model::Tr
         }
     }
     false
+}
+
+fn midi_record_enabled(app: &SoundApp) -> bool {
+    app.engine.session().tracks.iter().any(|t| t.kind.is_midi() && t.mixer.record_arm)
+}
+
+/// Move the armed MIDI/Instrument record-enable state to the adjacent MIDI-capable track.
+fn move_midi_record_enable(app: &mut SoundApp, next: bool) {
+    let (current, midi_tracks) = {
+        let s = app.engine.session();
+        (
+            s.tracks.iter().position(|t| t.kind.is_midi() && t.mixer.record_arm),
+            s.tracks.iter().enumerate().filter(|(_, t)| t.kind.is_midi()).map(|(i, _)| i).collect::<Vec<_>>(),
+        )
+    };
+    let Some(current) = current else { return };
+    let Some(slot) = midi_tracks.iter().position(|index| *index == current) else { return };
+    let target_slot = if next { slot.saturating_add(1).min(midi_tracks.len().saturating_sub(1)) } else { slot.saturating_sub(1) };
+    let Some(&target) = midi_tracks.get(target_slot) else { return };
+    if target == current { return; }
+    let s = app.engine.session_mut();
+    s.tracks[current].mixer.record_arm = false;
+    s.tracks[target].mixer.record_arm = true;
+    s.edit.selected_tracks = vec![s.tracks[target].id];
 }
 
 /// The zoom keys [`fixed`] handles, shared with [`repeating_command`]: T / R zoom the timeline in / out

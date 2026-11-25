@@ -34,6 +34,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Auditioning coverage now uses the configured Pre/Post-Roll values: `Alt+Left/Right` auditions before an edge, `Ctrl/Cmd+Left/Right` after it, and the combined chord covers the edge through both rolls.
 - Edit-selection display coverage now includes `Shift+F` for containing folders and `Shift+U` for the Marker Track lane.
 - Marker option coverage now includes `Shift+Y` for Marker Follows Edit.
+- Vertical-navigation conflict coverage now prioritizes MIDI Record Enable movement on `Ctrl/Cmd+Up/Down` when a MIDI/Instrument track is armed; otherwise the chord remains Track Height.
 
 ## Completion rule
 
