@@ -365,6 +365,7 @@ fn path_prompt_form(app: &mut SoundApp, ui: &mut egui::Ui, cmd: &str, path: &mut
         && !multi
         && cmd != "session.save_as"
         && cmd != "session.save_copy"
+        && cmd != "file.export_session_text"
         && key != "dir"
         && ui.button(crate::localization::text("Browse…")).clicked()
         && let Some(p) = pick(cmd, &[])
@@ -379,7 +380,7 @@ fn path_prompt_form(app: &mut SoundApp, ui: &mut egui::Ui, cmd: &str, path: &mut
         picked = Some(p);
     }
     if let Some(pick) = &app.services.pick_save
-        && (cmd == "session.save_as" || cmd == "session.save_copy")
+        && (cmd == "session.save_as" || cmd == "session.save_copy" || cmd == "file.export_session_text")
         && ui.button(crate::localization::text("Browse…")).clicked()
         && let Some(p) = pick(cmd, std::path::Path::new(path.as_str()))
     {

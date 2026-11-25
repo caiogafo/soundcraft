@@ -162,6 +162,7 @@ fn services() -> Services {
         pick_save: Some(Box::new(|purpose: &str, path: &std::path::Path| {
             let mut d = match purpose {
                 "file.bounce_mix" => rfd::FileDialog::new().add_filter("Audio", craft_audio::ENCODE_EXTENSIONS),
+                "file.export_session_text" => rfd::FileDialog::new().add_filter("Text", &["txt"]),
                 _ => rfd::FileDialog::new().add_filter("SoundCraft Session", &["scraft"]),
             };
             if let Some(dir) = path.parent().filter(|dir| dir.is_dir()) {
