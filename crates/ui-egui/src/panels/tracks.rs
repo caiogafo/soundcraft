@@ -153,7 +153,21 @@ pub fn tracks_and_groups(app: &mut SoundApp, ui: &mut Ui) {
             );
             ui.painter().with_clip_rect(r).text(pos2(r.min.x + 30.0, r.center().y), Align2::LEFT_CENTER, &name, regular(11.5), t.text);
             if resp.clicked() {
-                let _ = app.run("track.group_toggle", json!({"group": id}));
+                let mods = ui.input(|i| i.modifiers);
+                if mods.alt {
+                    let _ = app.run("track.groups_suspend_all", json!({"value": !active}));
+                } else if mods.command && !mods.shift {
+                    let new_state = !active;
+                    let current: Vec<(u64, bool)> = app.engine.session().groups.iter().map(|group| (group.id.0, group.active)).collect();
+                    for (group, state) in current {
+                        let want = if group == id { new_state } else { !new_state };
+                        if state != want {
+                            let _ = app.run("track.group_toggle", json!({"group": group}));
+                        }
+                    }
+                } else {
+                    let _ = app.run("track.group_toggle", json!({"group": id}));
+                }
             }
             let members: Vec<u64> =
                 app.engine.session().groups.iter().find(|g| g.id.0 == id).map(|g| g.members.iter().map(|m| m.0).collect()).unwrap_or_default();
