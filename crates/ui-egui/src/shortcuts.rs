@@ -278,8 +278,7 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("transport.go_to_end", json!({}));
             true
         }
-        // Commands Keyboard Focus: toggle the selected audio tracks between the main
-        // playlist and the alternate-playlist lanes (Pro Tools' `-`).
+        // Commands Keyboard Focus: toggle the selected track display (Pro Tools' `-`).
         Key::Minus if plain && app.ui.window == MainWindow::Edit => {
             toggle_playlist_view(app);
             true
@@ -565,22 +564,28 @@ fn commands_focus(app: &mut SoundApp, key: Key, shift: bool) -> bool {
     true
 }
 
-/// The `-` Commands Keyboard Focus shortcut toggles the playlist lanes for selected
-/// audio tracks. MIDI/instrument tracks keep their current view because Pro Tools'
-/// alternate playlist display has no equivalent there in this model.
+/// The `-` Commands Keyboard Focus shortcut toggles the selected track display:
+/// audio waveform/volume and MIDI notes/regions (the SoundCraft equivalent of clips).
 fn toggle_playlist_view(app: &mut SoundApp) {
     let s = app.engine.session();
-    let tracks: Vec<u64> = s
+    let targets: Vec<(u64, &'static str)> = s
         .tracks
         .iter()
-        .filter(|t| s.edit.selected_tracks.contains(&t.id) && t.kind.has_playlist() && !t.kind.is_midi())
-        .map(|t| t.id.0)
+        .filter(|t| s.edit.selected_tracks.contains(&t.id) && t.kind.has_playlist())
+        .map(|t| {
+            let view = if t.kind.is_midi() {
+                if t.view == "notes" { "regions" } else { "notes" }
+            } else if t.view == "waveform" {
+                "volume"
+            } else {
+                "waveform"
+            };
+            (t.id.0, view)
+        })
         .collect();
-    if tracks.is_empty() {
-        return;
+    for (track, view) in targets {
+        let _ = app.run("track.view", json!({"track": track, "view": view}));
     }
-    let show = tracks.iter().any(|id| s.track(soundcraft_model::TrackId(*id)).is_some_and(|t| t.view != "playlists"));
-    let _ = app.run("track.view", json!({"tracks": tracks, "view": if show { "playlists" } else { "waveform" }}));
 }
 
 /// Display the timeline selection edge in the main counter without destroying a range
