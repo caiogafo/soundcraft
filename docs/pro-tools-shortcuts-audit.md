@@ -56,6 +56,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Window coverage now maps macOS `Control+=` and `Control+Option+Shift+=` to the existing MIDI Editor panel; the docked and undocked Pro Tools variants converge on SoundCraft's single docked MIDI Editor.
 - Fades coverage now uses the guide's macOS `Control+D`/`Control+G` for Fade to Start/End; the prior Command+Control registrations were corrected.
 - Fades coverage also maps macOS `Command+Control+F` to applying a fade/crossfade through SoundCraft's existing selection-based fade command, while `Command+F` remains the Fades dialog action.
+- Zoom coverage now handles the standard macOS `Control+1–5` zoom preset family; Windows/Linux remain limited by the host's keypad/main-row and Start/Control modifier collapse.
 - Event coverage now includes `Cmd/Ctrl+I` for Identify Beat and `Alt+Shift+Z` for Retrospective Record, backed by the existing Event commands.
 - Group coverage now includes `Cmd/Ctrl+Shift+G` to suspend or restore all groups; `Cmd/Ctrl+G` remains New Group.
 - Clip List coverage now routes `Cmd/Ctrl+Shift+F` to the existing name filter, `Cmd/Ctrl+Shift+D` clears that filter, and `Cmd/Ctrl+Shift+R` opens Auto Rename for selected clips; category and unused filters are covered below.

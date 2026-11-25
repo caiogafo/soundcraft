@@ -524,6 +524,13 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("view.zoom_preset", json!({"preset": digit(key)}));
             true
         }
+        // Standard Pro Tools zoom presets use the physical Control key on
+        // macOS. The Cmd+Ctrl family above is retained for the optional
+        // Clip-Effects preset mode exposed by the command catalogue.
+        Key::Num1 | Key::Num2 | Key::Num3 | Key::Num4 | Key::Num5 if mac && m.ctrl && !m.command && !m.alt && !m.shift => {
+            let _ = app.run("view.zoom_preset", json!({"preset": digit(key)}));
+            true
+        }
         // Pro Tools' MIDI Record Enable navigation takes priority when a MIDI/Instrument
         // track is armed; otherwise the same chord changes track height.
         Key::ArrowUp | Key::ArrowDown if (m.ctrl || mods_match(Modifiers::COMMAND, m, mac)) && !m.alt && !m.shift && midi_record_enabled(app) => {
