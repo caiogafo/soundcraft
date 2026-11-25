@@ -290,6 +290,12 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         Key::ArrowLeft | Key::ArrowRight if plain && app.ui.window == MainWindow::Edit && !piano_roll_has_pointer(app) => {
             centre_on_selection(app, key == Key::ArrowRight)
         }
+        // Keep Pro Tools' B=Separate action available in the Edit window even when the optional
+        // Commands Keyboard Focus (a-z) toggle is off.
+        Key::B if plain && app.ui.window == MainWindow::Edit => {
+            let _ = app.run("edit.separate", json!({}));
+            true
+        }
         // Commands Keyboard Focus: single-key editing (Edit window only).
         k if !m.command
             && !m.alt
@@ -648,6 +654,13 @@ mod tests {
         app.engine.transport.position = 3000;
         assert!(super::fixed_more(&mut app, Key::ArrowUp, Modifiers::NONE, false));
         assert_eq!(app.engine.session().edit.selection, soundcraft_time::Range::new(2000, 3000));
+    }
+
+    #[test]
+    fn b_separates_in_the_edit_window_without_commands_focus() {
+        let mut app = app_with_selection();
+        assert!(super::fixed_more(&mut app, Key::B, Modifiers::NONE, false));
+        assert!(app.engine.session().edit.selected_clips.is_empty());
     }
 
     #[test]
