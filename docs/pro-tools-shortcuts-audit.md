@@ -55,7 +55,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Event/Clip coverage now maps `Option/Alt+Shift+U` to TCE Edit to Timeline and `Cmd/Ctrl+8` to Beat Analysis. Beat Analysis uses the main-key fallback because egui does not expose keypad identity separately; Pro Tools documents the latter as a numeric-keypad shortcut. Elastic Properties was already mapped to `Option/Alt+5` for the same reason.
 - Event coverage now includes `Cmd/Ctrl+I` for Identify Beat and `Alt+Shift+Z` for Retrospective Record, backed by the existing Event commands.
 - Group coverage now includes `Cmd/Ctrl+Shift+G` to suspend or restore all groups; `Cmd/Ctrl+G` remains New Group.
-- Clip List coverage now routes `Cmd/Ctrl+Shift+F` to the existing name filter, `Cmd/Ctrl+Shift+D` clears that filter, and `Cmd/Ctrl+Shift+R` opens Auto Rename for selected clips; category/unused filters remain explicitly unimplemented.
+- Clip List coverage now routes `Cmd/Ctrl+Shift+F` to the existing name filter, `Cmd/Ctrl+Shift+D` clears that filter, and `Cmd/Ctrl+Shift+R` opens Auto Rename for selected clips; category and unused filters are covered below.
 - Setup coverage now maps `Cmd/Ctrl+Shift+K` to the existing Keyboard Shortcuts window; editing, conflict resolution, presets and export of custom assignments remain unavailable.
 - Clip List category coverage now maps `Cmd/Ctrl+Shift+1/2/3/4` to Audio/MIDI/Video/Clip Groups, `Cmd/Ctrl+Alt+K` to Auto-Created, and `Cmd/Ctrl+Shift+U` to Unused. Unused is defined by audio sources with no timeline clips in the current model.
 - `Cmd/Ctrl+Shift+A` now selects every source and clip visible under the current Clip List name/category filters.
