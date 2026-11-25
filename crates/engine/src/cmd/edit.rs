@@ -1273,6 +1273,17 @@ mod tests {
     }
 
     #[test]
+    fn trim_to_file_start_and_end_are_independent() {
+        let (mut e, t, ids) = trim_session(&[(0, 10_000, 0), (20_000, 10_000, 20_000), (40_000, 5_000, 0)]);
+        e.execute("edit.trim_to_file_start", &json!({"clips": [ids[1].0]})).unwrap();
+        assert_eq!(bounds(&e, t), vec![(0, 10_000, 0), (10_000, 30_000, 10_000), (40_000, 45_000, 0)]);
+
+        let (mut e, t, ids) = trim_session(&[(0, 10_000, 0), (20_000, 10_000, 20_000), (40_000, 5_000, 0)]);
+        e.execute("edit.trim_to_file_end", &json!({"clips": [ids[1].0]})).unwrap();
+        assert_eq!(bounds(&e, t), vec![(0, 10_000, 0), (20_000, 40_000, 20_000), (40_000, 45_000, 0)]);
+    }
+
+    #[test]
     fn trim_to_fill_selection_stops_at_the_neighbours() {
         let (mut e, t, ids) = trim_session(&[(0, 10_000, 0), (20_000, 10_000, 20_000), (40_000, 5_000, 0)]);
         e.execute("edit.trim_to_fill_selection", &json!({"clips": [ids[1].0], "start": 5_000, "end": 45_000})).unwrap();
