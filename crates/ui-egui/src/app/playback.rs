@@ -16,6 +16,9 @@ pub(crate) fn automation_step_due(pos: Samples, last: Samples, step: Samples) ->
 impl SoundApp {
     /// Preview the timeline placement represented by a Clip List row.
     pub(crate) fn start_clip_audition(&mut self, id: ClipId) {
+        if self.clip_audition == Some(id) && self.is_playing() {
+            return;
+        }
         let Some((_, clip)) = self.engine.session().find_clip(id) else { return };
         if !clip.is_audio() { return }
         let (start, end) = (clip.start, clip.end());
