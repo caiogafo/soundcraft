@@ -350,6 +350,17 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("window.toggle_mix_edit", json!({}));
             true
         }
+        // Pro Tools' Control+= opens/closes the MIDI Editor; the docked form
+        // adds Option+Shift. Both map to SoundCraft's existing MIDI Editor
+        // panel, which is docked by the current layout.
+        Key::Equals if mac && m.ctrl && !m.command && !m.alt && !m.shift => {
+            let _ = app.run("window.midi_editor", json!({}));
+            true
+        }
+        Key::Equals if mac && m.ctrl && m.alt && m.shift && !m.command => {
+            let _ = app.run("window.midi_editor", json!({}));
+            true
+        }
         // Pro Tools: Control/Start+E toggles Zoom Toggle.
         Key::E if mods_match(Modifiers::COMMAND, m, mac) => {
             let _ = app.run("view.zoom_toggle", json!({}));
