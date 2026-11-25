@@ -189,7 +189,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "track.toggle_recent_playlist",
             "Toggle Recent Playlist",
             ["Track"],
-            Some("Ctrl+Alt+Shift+Left"),
+            Some("Shift+Left"),
             "{tracks?} — swaps to the previously shown playlist",
             has_selection,
             toggle_recent
