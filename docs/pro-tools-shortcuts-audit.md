@@ -26,7 +26,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Plain Edit key families are dispatched without requiring the `a-z` toggle.
 - `B` invokes Edit > Separate when an Edit selection is available.
 - Keyboard Focus switching now covers `Cmd/Ctrl+Alt+1` (Commands), `+2` (Clip List) and `+3` (Groups List), using the corresponding SoundCraft focus state.
-- Pro Tools Search now accepts `Cmd+Ctrl+S` on macOS and `Ctrl+Shift+S` on Windows/Linux; `Ctrl/Cmd+S` remains session Save.
+- Pro Tools Search accepts `Cmd+Ctrl+S` on macOS. On Windows/Linux the guide's `Start+Shift+S` has no safe equivalent in the current host, and `Ctrl+Shift+S` remains Save As; `Ctrl/Cmd+S` remains session Save.
 - MIDI Operations coverage now includes `Alt+Q/T/Y/P` (Option on macOS) to open or close the existing MIDI Operations window on Quantize, Transpose, Split Notes and Duration; the remaining gap is the numeric-keypad Step Input focus model.
 - Arrow navigation, transport shortcuts, marker shortcuts and save/export shortcuts are covered by the existing UI shortcut dispatcher.
 - The Commands Keyboard Focus batch now covers track-view toggle (`-`: waveform/volume and notes/regions), timeline-selection edge display in the main counter (`Q/W`), clip start/sync/end placement (`Y/U/I`, `H/J/K`) and earlier-by-grid nudge (`\\`).

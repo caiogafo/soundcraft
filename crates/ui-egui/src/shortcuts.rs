@@ -49,11 +49,10 @@ fn mods_match(want: Modifiers, got: Modifiers, mac: bool) -> bool {
     want.command == got.command && want.shift == got.shift && want.alt == got.alt && ctrl
 }
 
-/// Cmd+Ctrl+S on macOS and Ctrl+Shift+S on Windows/Linux open Search. Off macOS
-/// egui reports the physical Ctrl chord as both Ctrl and Command, while Ctrl+S
-/// must remain Save.
+/// Cmd+Ctrl+S opens Search on macOS. On Windows/Linux, Ctrl+Shift+S is already
+/// Save As in SoundCraft, so it must not be stolen by Search.
 fn search_chord(m: Modifiers, mac: bool) -> bool {
-    (mac && m.command && m.ctrl) || (!mac && m.command && m.shift && !m.alt)
+    mac && m.command && m.ctrl
 }
 
 /// Commands a host auto-repeat runs again, so holding a zoom key keeps zooming (#1377). Every other

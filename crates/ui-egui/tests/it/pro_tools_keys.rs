@@ -108,19 +108,15 @@ fn command_clip_and_group_focus_shortcuts_match_pro_tools() {
 }
 
 #[test]
-fn search_uses_the_platform_pro_tools_chord_without_stealing_save() {
-    for (os, cmd) in OSES {
+fn search_uses_the_mac_pro_tools_chord_without_stealing_save_as() {
+    let (ctx, mut app) = rig(OperatingSystem::Mac);
+    press(&ctx, &mut app, Key::S, Modifiers { ctrl: true, ..MAC_CMD });
+    assert!(app.ui.show_search, "Mac: search shortcut");
+
+    for (os, cmd) in OSES.into_iter().filter(|(os, _)| *os != OperatingSystem::Mac) {
         let (ctx, mut app) = rig(os);
-        let search = if os == OperatingSystem::Mac {
-            Modifiers { ctrl: true, ..cmd }
-        } else {
-            Modifiers { shift: true, ..cmd }
-        };
-        press(&ctx, &mut app, Key::S, search);
-        assert!(app.ui.show_search, "{os:?}: search shortcut");
-        app.ui.show_search = false;
-        press(&ctx, &mut app, Key::S, cmd);
-        assert!(!app.ui.show_search, "{os:?}: save must not open search");
+        press(&ctx, &mut app, Key::S, Modifiers { shift: true, ..cmd });
+        assert!(!app.ui.show_search, "{os:?}: Ctrl+Shift+S remains Save As");
     }
 }
 
