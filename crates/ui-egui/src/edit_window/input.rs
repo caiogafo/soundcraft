@@ -369,9 +369,7 @@ fn lane_click(app: &mut SoundApp, ui: &mut Ui, c: &LaneCtx<'_>, resp: &egui::Res
     } else if resp.clicked() && curve_handle.is_none() {
         match eff {
             Tool::Grabber => {
-                if hit.is_none()
-                    && let Some(param) = auto_view
-                {
+                if let Some(param) = auto_view {
                     let value = automation_breakpoint_value(track, param, at, lane, p, mods);
                     let _ = app.run(
                         "automation.set_point",
