@@ -30,6 +30,7 @@ pub fn parse(s: &str) -> Option<(Modifiers, Key)> {
                     "]" => Key::CloseBracket,
                     "," => Key::Comma,
                     "." => Key::Period,
+                    ";" => Key::Semicolon,
                     "/" => Key::Slash,
                     "'" => Key::Quote,
                     "=" => Key::Equals,
@@ -228,6 +229,18 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         // Pro Tools: Cmd/Ctrl+J toggles Transport Online.
         Key::J if mods_match(Modifiers::COMMAND, m, mac) => {
             let _ = app.run("options.transport_online", json!({}));
+            true
+        }
+        // Selection › Move Edit Up/Down uses the physical Control key on
+        // macOS and the primary Start/Ctrl chord on Windows/Linux.
+        Key::P | Key::Semicolon if m.ctrl && !m.alt && !m.shift && (!mac || !m.command) => {
+            move_selection_track(app, if key == Key::Semicolon { 1 } else { -1 });
+            true
+        }
+        // Selection › Remove Edit from Top/Bottom.
+        Key::P | Key::Semicolon if m.ctrl && m.alt && !m.shift && (!mac || !m.command) => {
+            let id = if key == Key::P { "edit.remove_selection_top" } else { "edit.remove_selection_bottom" };
+            let _ = app.run(id, json!({}));
             true
         }
         // These two Pro Tools chords use a distinct physical Control key on
