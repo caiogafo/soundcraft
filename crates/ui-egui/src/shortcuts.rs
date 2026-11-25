@@ -380,6 +380,17 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run(id, json!({}));
             true
         }
+        // Pro Tools pastes Clip Effects with the ordinary Cmd/Ctrl+V chord
+        // when the Clip Effects clipboard is active.
+        Key::V
+            if m.command
+                && !m.alt
+                && !m.shift
+                && !app.engine.clipboard.clip_effects.is_empty() =>
+        {
+            let _ = app.run("edit.paste_clip_effects", json!({}));
+            true
+        }
         // Pro Tools pastes Clip Gain with the ordinary Cmd/Ctrl+V chord when
         // the Clip Gain clipboard is active. Keep normal clip paste otherwise.
         Key::V

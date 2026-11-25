@@ -89,12 +89,12 @@ pub fn specs() -> Vec<CommandSpec> {
             has_clip_gain_clipboard,
             paste_clip_gain
         ),
-        cmd!(noundo "edit.copy_clip_effects", "Clip Effects", ["Edit", "Copy Special"], None, "{clips?} — copies the first clip's clip-effect settings", has_selection, |e, p| clip_effects(e, p, true, false, "edit.copy_clip_effects")),
+        cmd!(noundo "edit.copy_clip_effects", "Clip Effects", ["Edit", "Copy Special"], Some("Cmd+Alt+Ctrl+C"), "{clips?} — copies the first clip's clip-effect settings", has_selection, |e, p| clip_effects(e, p, true, false, "edit.copy_clip_effects")),
         cmd!(
             "edit.cut_clip_effects",
             "Clip Effects",
             ["Edit", "Cut Special"],
-            None,
+            Some("Cmd+Alt+Ctrl+X"),
             "{clips?} — copies then removes clip-effect settings",
             has_selection,
             |e, p| clip_effects(e, p, true, true, "edit.cut_clip_effects")
@@ -103,7 +103,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "edit.clear_clip_effects",
             "Clip Effects",
             ["Edit", "Clear Special"],
-            None,
+            Some("Cmd+Alt+Ctrl+B"),
             "{clips?} — removes clip-effect settings (and bypass)",
             has_selection,
             |e, p| clip_effects(e, p, false, true, "edit.clear_clip_effects")

@@ -67,6 +67,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Selection coverage now registers the official multi-modifier Move/Halve/Double/Duplicate-and-Extend chords against SoundCraft's existing edit-selection operations; host modifier collapse remains subject to the same platform caveat described below.
 - Selection vertical navigation now covers `Control/Start+P` and `Control/Start+;` for moving the edit selection, plus `Option/Alt+Control/Start+P/;` for removing its top or bottom track; `;` is now a first-class parsed shortcut key.
 - Clip/Event coverage now includes `Cmd/Ctrl+Alt+0` for Quantize MIDI to Grid, routed through the existing MIDI quantize engine operation; `Cmd/Ctrl+0` remains Quantize Clip to Grid.
+- Clip Effects coverage now maps the existing copy/cut/clear actions to the official `Cmd+Alt+Ctrl+C/X/B` (or `Ctrl+Alt+Start+C/X/B`) family and uses contextual `Cmd/Ctrl+V` for Paste Clip Effects when that clipboard is active; preset save/recall remains unavailable.
 
 ## Completion rule
 
@@ -85,7 +86,7 @@ misleading:
 | --- | --- | --- |
 | Numeric Keypad: Transport/Shuttle | `0–9`, keypad combinations, Shuttle Lock | The Preferences screen lists Classic/Transport/Shuttle, but the control is disabled and the input layer cannot distinguish keypad digits from the main number row. |
 | Scrub/Jog/Shuttle | Control/Start-drag, Shuttle Lock numeric chords | No equivalent transport scrub/shuttle mode or host jog state is implemented. |
-| Clip Effects | Option/Alt+6, Command/Control+Option+Control+B/X/C/S | The display exists, but no full Pro Tools Clip Effects processing/preset model exists in the SoundCraft clip model. |
+| Clip Effects | `Option/Alt+6`, `Cmd+Alt+Ctrl+B/X/C/S` | Display and copy/cut/clear/paste are mapped to SoundCraft's existing clip-effect model; Pro Tools preset save/recall and the full processing UI remain unavailable. |
 | Elastic Audio | Warp-marker add/move/delete and rendered/real-time toggle | No Elastic Audio event/warp-marker model exists. |
 | MIDI Operations and Step Input | Numeric duration keys, panel navigation | SoundCraft opens Time/Tempo/MIDI Operations and Real-Time Properties with `Alt+1–4` main-key fallbacks; it lacks Pro Tools' numeric-keypad Step Input focus model. |
 | Workspace/Browser | Workspace search, browser navigation and drag/drop modifier matrix | No Workspace/Soundbase browser model; ordinary file drag/drop is implemented separately in the Edit window. |
