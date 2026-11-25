@@ -172,6 +172,13 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("transport.record", json!({}));
             true
         }
+        // Pro Tools: Cmd/Ctrl+Enter adds a marker without opening the New
+        // Memory Location dialog. Bare Enter keeps SoundCraft's requested
+        // add-and-rename behavior below.
+        Key::Enter if mods_match(Modifiers::COMMAND, m, mac) && !m.alt && !m.shift => {
+            let _ = app.run("markers.add", json!({}));
+            true
+        }
         Key::S if search_chord(m, mac) => {
             let _ = app.run("window.search", json!({}));
             true
@@ -367,36 +374,6 @@ fn begin_counter_edit(app: &mut SoundApp) {
 fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
     let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
     match key {
-        // Pro Tools session navigation. Bare Enter remains the marker command handled
-        // by `fixed`; these modified forms are unambiguous navigation variants.
-        Key::Enter if m.shift && !m.alt && !m.command && !m.ctrl => {
-            extend_session_boundary(app, false);
-            true
-        }
-        Key::Enter if m.alt && m.shift && !m.command && !m.ctrl => {
-            extend_session_boundary(app, true);
-            true
-        }
-        Key::Enter if m.ctrl && m.shift && m.command && !m.alt => {
-            extend_session_boundary(app, true);
-            true
-        }
-        Key::Enter if m.command && !m.ctrl && !m.alt && !m.shift => {
-            let _ = app.run("transport.rtz", json!({}));
-            true
-        }
-        Key::Enter if m.ctrl && m.command && !m.alt && !m.shift => {
-            let _ = app.run("transport.go_to_end", json!({}));
-            true
-        }
-        Key::Enter if m.ctrl && !m.command && !m.alt && !m.shift => {
-            let _ = app.run("transport.rtz", json!({}));
-            true
-        }
-        Key::Enter if m.alt && !m.command && !m.ctrl && !m.shift => {
-            let _ = app.run("transport.go_to_end", json!({}));
-            true
-        }
         // Commands Keyboard Focus: toggle the selected track display (Pro Tools' `-`).
         Key::Minus if plain && app.ui.window == MainWindow::Edit => {
             toggle_playlist_view(app);
@@ -508,16 +485,6 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             None => false,
         },
     }
-}
-
-/// Extend the current edit selection to the start or end of the session.
-fn extend_session_boundary(app: &mut SoundApp, end: bool) {
-    let (sel, boundary) = {
-        let s = app.engine.session();
-        (s.edit.selection, if end { s.content_end() } else { 0 })
-    };
-    let range = if end { soundcraft_time::Range::new(sel.start, boundary.max(sel.start)) } else { soundcraft_time::Range::new(0, sel.end) };
-    let _ = app.run("edit.select", json!({"start": range.start, "end": range.end}));
 }
 
 /// Select the previous/next alternate playlist on the selected playlist tracks.

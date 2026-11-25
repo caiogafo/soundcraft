@@ -176,6 +176,17 @@ fn triple_modifier_marker_shortcuts_toggle_ruler_and_folder_lines() {
 }
 
 #[test]
+fn primary_enter_adds_a_marker_without_opening_rename() {
+    for (os, cmd) in OSES {
+        let (ctx, mut app) = rig(os);
+        let before = app.engine.session().markers.len();
+        press(&ctx, &mut app, Key::Enter, cmd);
+        assert_eq!(app.engine.session().markers.len(), before + 1, "{os:?}: marker added");
+        assert_eq!(app.dialogs.open_name(), None, "{os:?}: no rename dialog");
+    }
+}
+
+#[test]
 fn commands_focus_shift_p_and_semicolon_extend_the_selection_onto_shown_tracks() {
     for (os, _) in OSES {
         let (ctx, mut app) = rig(os);
