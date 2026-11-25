@@ -22,7 +22,7 @@ pub fn specs() -> Vec<CommandSpec> {
         cmd!("midi.note_add", "Add Note", [], None, "{clip, pitch, start_ticks, length_ticks?: 480, velocity?: 100, channel?: 0}", always, note_add),
         cmd!("midi.note_edit", "Edit Note", [], None, "{clip, index, pitch?, start_ticks?, length_ticks?, velocity?}", always, note_edit),
         cmd!("midi.note_delete", "Delete Notes", [], None, "{clip, indices: [n]}", always, note_delete),
-        cmd!("midi.notes_move", "Move Notes", [], None, "{clip, indices: [n], ticks?: 0, semitones?: 0}", always, notes_move),
+        cmd!("midi.notes_move", "Move Notes", [], None, "{clip, indices: [n], ticks?: 0, semitones?: 0, copy?: false}", always, notes_move),
     ]
 }
 
@@ -123,6 +123,7 @@ fn notes_move(e: &mut Engine, p: &Value) -> Result<Value> {
     let idx = indices(p);
     let dt = i64_or(p, "ticks", 0);
     let ds = i64_or(p, "semitones", 0);
+    let copy = p.get("copy").and_then(Value::as_bool).unwrap_or(false);
     let seq = seq_mut(e, id, "midi.notes_move")?;
     // Clamp the shared delta so the earliest selected note stops at tick 0 and the selection keeps its spacing.
     let earliest = seq.notes.iter().enumerate().filter(|(i, _)| idx.contains(i)).map(|(_, n)| n.start).min();
@@ -130,13 +131,27 @@ fn notes_move(e: &mut Engine, p: &Value) -> Result<Value> {
         Some(m) => dt.max(0i64.saturating_sub(m).min(0)),
         None => dt,
     };
-    for (i, n) in seq.notes.iter_mut().enumerate() {
-        if idx.contains(&i) {
-            n.start = n.start.saturating_add(dt).max(0);
-            n.pitch = i64::from(n.pitch).saturating_add(ds).clamp(0, 127) as u8;
+    if copy {
+        let copies: Vec<Note> = seq.notes.iter().enumerate().filter(|(i, _)| idx.contains(i)).map(|(_, n)| {
+            let mut copy = *n;
+            copy.start = copy.start.saturating_add(dt).max(0);
+            copy.pitch = i64::from(copy.pitch).saturating_add(ds).clamp(0, 127) as u8;
+            copy
+        }).collect();
+        seq.notes.extend(copies.iter().copied());
+    } else {
+        for (i, n) in seq.notes.iter_mut().enumerate() {
+            if idx.contains(&i) {
+                n.start = n.start.saturating_add(dt).max(0);
+                n.pitch = i64::from(n.pitch).saturating_add(ds).clamp(0, 127) as u8;
+            }
         }
     }
-    let moved: Vec<Note> = seq.notes.iter().enumerate().filter(|(i, _)| idx.contains(i)).map(|(_, n)| *n).collect();
+    let moved: Vec<Note> = if copy {
+        seq.notes.iter().rev().take(idx.len()).copied().collect()
+    } else {
+        seq.notes.iter().enumerate().filter(|(i, _)| idx.contains(i)).map(|(_, n)| *n).collect()
+    };
     seq.sort();
     // Where the moved notes ended up after sorting, so the editor can keep them selected.
     let mut taken = vec![false; seq.notes.len()];

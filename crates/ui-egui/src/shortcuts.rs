@@ -569,6 +569,10 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("view.zoom_preset", json!({"preset": digit(key)}));
             true
         }
+        // The MIDI editor owns the complete Pro Tools MIDI Note Editing arrow family while the
+        // pointer is over its piano roll. Without this guard, Ctrl/Alt/Cmd arrows are consumed by
+        // track height, MIDI Record Enable, auditioning, or Clip Gain before note_keys sees them.
+        Key::ArrowUp | Key::ArrowDown | Key::ArrowLeft | Key::ArrowRight if piano_roll_has_pointer(app) => true,
         // Pro Tools' MIDI Record Enable navigation takes priority when a MIDI/Instrument
         // track is armed; otherwise the same chord changes track height.
         Key::ArrowUp | Key::ArrowDown if (m.ctrl || mods_match(Modifiers::COMMAND, m, mac)) && !m.alt && !m.shift && midi_record_enabled(app) => {

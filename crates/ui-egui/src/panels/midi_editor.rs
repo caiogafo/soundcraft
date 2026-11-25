@@ -140,7 +140,7 @@ pub fn show(app: &mut SoundApp, ui: &mut Ui) {
         pos2(header.min.x + 110.0, header.center().y),
         Align2::LEFT_CENTER,
         format!(
-            "{} · {} notes · {} selected · Pencil: add · drag: move/select · arrows: move · Delete: remove",
+            "{} · {} notes · {} selected · Pencil: add · drag: move/select · arrows: edit/select · Delete: remove",
             clip.name,
             sequence.notes.len(),
             app.midi.selected.len()
@@ -428,44 +428,43 @@ fn note_pointer(app: &mut SoundApp, ui: &mut Ui, g: &Roll<'_>, cid: ClipId, penc
     }
 }
 
-/// Keyboard: select all, move and delete notes.
+/// Keyboard: the Pro Tools MIDI Note Editing family (transpose, velocity, selection and trim).
 fn note_keys(app: &mut SoundApp, ui: &mut Ui, g: &Roll<'_>, cid: ClipId) {
     let Roll { sequence, roll, grid_ticks, .. } = *g;
-    // Keyboard: Cmd+A select all; arrows transpose (Shift = octave) and move by the grid.
     if ui.rect_contains_pointer(roll) && !ui.ctx().egui_wants_keyboard_input() {
-        let (all, up, down, left, right, shift) = ui.input(|i| {
-            let arrows = !i.modifiers.alt && !i.modifiers.command && !i.modifiers.ctrl;
-            (
-                i.modifiers.command && i.key_pressed(egui::Key::A),
-                arrows && i.key_pressed(egui::Key::ArrowUp),
-                arrows && i.key_pressed(egui::Key::ArrowDown),
-                arrows && !i.modifiers.shift && i.key_pressed(egui::Key::ArrowLeft),
-                arrows && !i.modifiers.shift && i.key_pressed(egui::Key::ArrowRight),
-                i.modifiers.shift,
-            )
-        });
+        let input = ui.input(|i| (i.modifiers, i.key_pressed(egui::Key::A), i.key_pressed(egui::Key::ArrowUp), i.key_pressed(egui::Key::ArrowDown), i.key_pressed(egui::Key::ArrowLeft), i.key_pressed(egui::Key::ArrowRight)));
+        let (mods, all, up, down, left, right) = input;
         if all {
             app.midi.selected = (0..sequence.notes.len()).collect();
         }
-        let semi = if up {
-            1
-        } else if down {
-            -1
-        } else {
-            0
-        } * if shift { 12 } else { 1 };
-        let ticks = if right {
-            grid_ticks
-        } else if left {
-            -grid_ticks
-        } else {
-            0
-        };
-        if (semi != 0 || ticks != 0) && !app.midi.selected.is_empty() {
-            let moved = app.run("midi.notes_move", json!({"clip": cid.0, "indices": app.midi.selected, "ticks": ticks, "semitones": semi}));
-            // The engine re-sorts the notes: follow the moved ones to their new indices, so the
-            // selection never points at other notes and the arrows can keep nudging it.
-            app.midi.selected = moved.ok().and_then(|v| serde_json::from_value(v["indices"].clone()).ok()).unwrap_or_default();
+        let primary = mods.command;
+        let copy = mods.alt;
+        let shift = mods.shift;
+        let physical_ctrl = mods.ctrl;
+        let vertical = up || down;
+        let horizontal = left || right;
+        if !app.midi.selected.is_empty() && vertical {
+            let dir = if up { 1 } else { -1 };
+            if primary {
+                change_selected_velocity(app, cid, dir * if shift { 15 } else { 5 });
+            } else {
+                let semitones = dir * if shift { 12 } else { 1 };
+                let semitones = if physical_ctrl { dir } else { semitones };
+                move_selected_notes(app, cid, semitones, 0, copy);
+            }
+        } else if !app.midi.selected.is_empty() && horizontal {
+            if primary {
+                // Cmd/Ctrl+Left/Right selects the previous/next note; Shift adds it.
+                select_adjacent_note(app, sequence, left, shift);
+            } else if physical_ctrl {
+                trim_selected_notes(app, cid, left, false, shift, grid_ticks);
+            } else if mods.alt {
+                trim_selected_notes(app, cid, left, true, shift, grid_ticks);
+            } else if shift {
+                select_adjacent_note(app, sequence, left, true);
+            } else {
+                select_adjacent_note(app, sequence, left, false);
+            }
         }
     }
     if !app.midi.selected.is_empty()
@@ -474,6 +473,60 @@ fn note_keys(app: &mut SoundApp, ui: &mut Ui, g: &Roll<'_>, cid: ClipId) {
     {
         let _ = app.run("midi.note_delete", json!({"clip": cid.0, "indices": app.midi.selected}));
         app.midi.selected.clear();
+    }
+}
+
+fn move_selected_notes(app: &mut SoundApp, cid: ClipId, semitones: i64, ticks: i64, copy: bool) {
+    let selected = app.midi.selected.clone();
+    let moved = app.run("midi.notes_move", json!({"clip": cid.0, "indices": selected, "ticks": ticks, "semitones": semitones, "copy": copy}));
+    app.midi.selected = moved.ok().and_then(|v| serde_json::from_value(v["indices"].clone()).ok()).unwrap_or_default();
+}
+
+fn change_selected_velocity(app: &mut SoundApp, cid: ClipId, delta: i64) {
+    let selected = app.midi.selected.clone();
+    let notes = app.engine.session().find_clip(cid).and_then(|(_, c)| match &c.content {
+        ClipContent::Midi { sequence } => Some(selected.iter().filter_map(|i| sequence.notes.get(*i).map(|n| (*i, n.velocity))).collect::<Vec<_>>()),
+        _ => None,
+    }).unwrap_or_default();
+    for (index, velocity) in notes {
+        let _ = app.run("midi.note_edit", json!({"clip": cid.0, "index": index, "velocity": i64::from(velocity) + delta}));
+    }
+}
+
+fn trim_selected_notes(app: &mut SoundApp, cid: ClipId, left: bool, end: bool, next_value: bool, grid_ticks: i64) {
+    let step = grid_ticks.saturating_mul(if next_value { 2 } else { 1 }).max(1);
+    let selected = app.midi.selected.clone();
+    let notes = app.engine.session().find_clip(cid).and_then(|(_, c)| match &c.content {
+        ClipContent::Midi { sequence } => Some(selected.iter().filter_map(|i| sequence.notes.get(*i).map(|n| (*i, n.start, n.length))).collect::<Vec<_>>()),
+        _ => None,
+    }).unwrap_or_default();
+    for (index, start, length) in notes {
+        let (start_ticks, length_ticks) = if end {
+            (start, if left { length.saturating_sub(step).max(1) } else { length.saturating_add(step) })
+        } else if left {
+            let shift = step.min(start);
+            (start - shift, length.saturating_add(shift))
+        } else {
+            (start.saturating_add(step), length.saturating_sub(step).max(1))
+        };
+        let _ = app.run("midi.note_edit", json!({"clip": cid.0, "index": index, "start_ticks": start_ticks, "length_ticks": length_ticks}));
+    }
+}
+
+fn select_adjacent_note(app: &mut SoundApp, sequence: &soundcraft_midi::Sequence, left: bool, add: bool) {
+    let mut order: Vec<usize> = (0..sequence.notes.len()).collect();
+    order.sort_by_key(|i| (sequence.notes[*i].start, sequence.notes[*i].pitch));
+    let candidate = if left {
+        app.midi.selected.iter().filter_map(|i| order.iter().position(|x| x == i).and_then(|p| p.checked_sub(1))).min().map(|p| order[p])
+    } else {
+        app.midi.selected.iter().filter_map(|i| order.iter().position(|x| x == i).and_then(|p| order.get(p + 1).copied())).max()
+    };
+    if let Some(i) = candidate {
+        if add {
+            if !app.midi.selected.contains(&i) { app.midi.selected.push(i); }
+        } else {
+            app.midi.selected = vec![i];
+        }
     }
 }
 
