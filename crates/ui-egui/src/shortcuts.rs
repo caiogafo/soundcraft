@@ -251,6 +251,13 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("view.marker_comments", json!({}));
             true
         }
+        // Pro Tools: Shift+X targets the first track in the edit selection
+        // (or toggles between track and ruler). SoundCraft's equivalent target
+        // state follows the first selected track.
+        Key::X if m.shift && !m.command && !m.ctrl && !m.alt => {
+            let _ = app.run("options.marker_target_follows_selection", json!({}));
+            true
+        }
         // Pro Tools: show/hide marker ruler and folder lines. These are the
         // three-modifier chords, so they do not conflict with Alt+R zoom or
         // Shift+F's folder-selection command.

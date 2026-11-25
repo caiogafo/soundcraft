@@ -193,6 +193,16 @@ fn shift_n_toggles_marker_comments_view() {
 }
 
 #[test]
+fn shift_x_toggles_marker_target_follow_selection() {
+    for (os, _) in OSES {
+        let (ctx, mut app) = rig(os);
+        assert!(!app.engine.session().edit.flag("options.marker_target_follows_first_selected_track"), "{os:?}: default target");
+        press(&ctx, &mut app, Key::X, Modifiers::SHIFT);
+        assert!(app.engine.session().edit.flag("options.marker_target_follows_first_selected_track"), "{os:?}: follows selection");
+    }
+}
+
+#[test]
 fn commands_focus_shift_p_and_semicolon_extend_the_selection_onto_shown_tracks() {
     for (os, _) in OSES {
         let (ctx, mut app) = rig(os);
