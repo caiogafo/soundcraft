@@ -27,6 +27,9 @@ pub struct OpsState {
     pub transpose: i64,
     pub velocity_add: i64,
     pub duration_add: i64,
+    pub split_pitch_from: i64,
+    pub split_pitch_to: i64,
+    pub split_action: String,
     pub rtp_velocity: i64,
     pub rtp_transpose: i64,
     pub rtp_duration: f64,
@@ -59,6 +62,9 @@ impl Default for OpsState {
             transpose: 12,
             velocity_add: 10,
             duration_add: 0,
+            split_pitch_from: 0,
+            split_pitch_to: 127,
+            split_action: "split".into(),
             rtp_velocity: 0,
             rtp_transpose: 0,
             rtp_duration: 100.0,
@@ -258,7 +264,7 @@ fn midi_ops(app: &mut SoundApp, ctx: &egui::Context) {
             craft_ui::ComboBox::from_label(crate::localization::text("Operation"))
                 .selected_text(crate::localization::text(&app.ops.midi_op))
                 .show_ui(ui, |ui| {
-                    for c in ["quantize", "transpose", "change velocity", "change duration", "flatten performance", "restore performance"] {
+                    for c in ["quantize", "transpose", "change velocity", "change duration", "split notes", "flatten performance", "restore performance"] {
                         ui.selectable_value(&mut app.ops.midi_op, c.to_string(), crate::localization::text(c));
                     }
                 });
@@ -281,6 +287,16 @@ fn midi_ops(app: &mut SoundApp, ctx: &egui::Context) {
                 "change duration" => {
                     ui.add(egui::Slider::new(&mut app.ops.duration_add, -960..=960).text(crate::localization::text("Add ticks")));
                 }
+                "split notes" => {
+                    ui.add(egui::Slider::new(&mut app.ops.split_pitch_from, 0..=127).text(crate::localization::text("Pitch from")));
+                    ui.add(egui::Slider::new(&mut app.ops.split_pitch_to, 0..=127).text(crate::localization::text("Pitch to")));
+                    craft_ui::ComboBox::from_label(crate::localization::text("Action"))
+                        .selected_text(crate::localization::text(&app.ops.split_action))
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(&mut app.ops.split_action, "split".into(), crate::localization::text("Split"));
+                            ui.selectable_value(&mut app.ops.split_action, "select".into(), crate::localization::text("Select"));
+                        });
+                }
                 _ => {}
             }
             ui.label(egui::RichText::new(crate::localization::text("Applies to the selected MIDI clips (or those under the selection).")).small());
@@ -291,6 +307,10 @@ fn midi_ops(app: &mut SoundApp, ctx: &egui::Context) {
                     "transpose" => app.run("event.transpose", json!({"semitones": app.ops.transpose})),
                     "change velocity" => app.run("event.change_velocity", json!({"add": app.ops.velocity_add})),
                     "change duration" => app.run("event.change_duration", json!({"add": app.ops.duration_add})),
+                    "split notes" => app.run(
+                        "event.select_split_notes",
+                        json!({"pitch_from": app.ops.split_pitch_from, "pitch_to": app.ops.split_pitch_to, "action": app.ops.split_action}),
+                    ),
                     "flatten performance" => app.run("event.flatten_performance", json!({})),
                     _ => app.run("event.restore_performance", json!({})),
                 };

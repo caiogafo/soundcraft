@@ -154,6 +154,16 @@ fn alt_t_and_alt_p_open_midi_operations_on_the_matching_panels() {
 }
 
 #[test]
+fn alt_y_opens_midi_operations_on_split_notes() {
+    for (os, cmd) in OSES {
+        let (ctx, mut app) = rig(os);
+        press(&ctx, &mut app, Key::Y, Modifiers { alt: true, ..cmd });
+        assert!(app.ui.show_midi_ops, "{os:?}: open Split Notes");
+        assert_eq!(app.ops.midi_op, "split notes", "{os:?}: select Split Notes");
+    }
+}
+
+#[test]
 fn commands_focus_shift_p_and_semicolon_extend_the_selection_onto_shown_tracks() {
     for (os, _) in OSES {
         let (ctx, mut app) = rig(os);

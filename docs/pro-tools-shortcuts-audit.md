@@ -27,7 +27,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - `B` invokes Edit > Separate when an Edit selection is available.
 - Keyboard Focus switching now covers `Cmd/Ctrl+Alt+1` (Commands), `+2` (Clip List) and `+3` (Groups List), using the corresponding SoundCraft focus state.
 - Pro Tools Search now accepts `Cmd+Ctrl+S` on macOS and `Ctrl+Shift+S` on Windows/Linux; `Ctrl/Cmd+S` remains session Save.
-- MIDI Operations coverage now includes `Alt+Q/T/P` (Option on macOS) to open or close the existing MIDI Operations window on Quantize, Transpose and Duration; the remaining panel-specific keys require equivalent Split Notes/Step Input focus controls.
+- MIDI Operations coverage now includes `Alt+Q/T/Y/P` (Option on macOS) to open or close the existing MIDI Operations window on Quantize, Transpose, Split Notes and Duration; the remaining gap is the numeric-keypad Step Input focus model.
 - Arrow navigation, transport shortcuts, marker shortcuts and save/export shortcuts are covered by the existing UI shortcut dispatcher.
 - The Commands Keyboard Focus batch now covers track-view toggle (`-`: waveform/volume and notes/regions), timeline-selection edge display in the main counter (`Q/W`), clip start/sync/end placement (`Y/U/I`, `H/J/K`) and earlier-by-grid nudge (`\\`).
 - The same family now covers edit-boundary audition: `6/8` play to the edit start/end and `7/9` play from the edit start/end.
@@ -61,7 +61,7 @@ misleading:
 | Scrub/Jog/Shuttle | Control/Start-drag, Shuttle Lock numeric chords | No equivalent transport scrub/shuttle mode or host jog state is implemented. |
 | Clip Effects | Option/Alt+6, Command/Control+Option+Control+B/X/C/S | No Clip Effects processing/preset model exists in the SoundCraft clip model. |
 | Elastic Audio | Warp-marker add/move/delete and rendered/real-time toggle | No Elastic Audio event/warp-marker model exists. |
-| MIDI Operations and Step Input | Option/Alt+Y, numeric duration keys, panel navigation | SoundCraft has a MIDI Operations window and maps Quantize/Transpose/Duration actions, but it lacks Pro Tools' Split Notes and numeric-keypad Step Input focus model. |
+| MIDI Operations and Step Input | Numeric duration keys, panel navigation | SoundCraft has a MIDI Operations window and maps Quantize/Transpose/Split Notes/Duration actions, but it lacks Pro Tools' numeric-keypad Step Input focus model. |
 | Workspace/Browser | Workspace search, browser navigation and drag/drop modifier matrix | No Workspace/Soundbase browser model; ordinary file drag/drop is implemented separately in the Edit window. |
 | Deck/Satellite/ICON control surfaces | Deck, Satellite and hardware-specific modifier shortcuts | No external deck, satellite or ICON control-surface integration exists. |
 | Custom Keyboard Shortcuts window | Setup > Keyboard Shortcuts, conflict resolver, presets and export | SoundCraft has a command registry, but no user-editable shortcut-assignment window/preset format equivalent to Pro Tools. |
