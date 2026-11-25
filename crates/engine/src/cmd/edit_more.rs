@@ -67,7 +67,7 @@ pub fn specs() -> Vec<CommandSpec> {
             has_range,
             |e, p| auto_copy(e, p, Lanes::Plugin, true, "edit.cut_plugin_automation")
         ),
-        cmd!(noundo "edit.copy_all_automation", "All Automation", ["Edit", "Copy Special"], None, "{tracks?, start?, end?} — copies automation only (no clips)", has_range, |e, p| auto_copy(e, p, Lanes::All, false, "edit.copy_all_automation")),
+        cmd!(noundo "edit.copy_all_automation", "All Automation", ["Edit", "Copy Special"], Some("Cmd+Ctrl+C"), "{tracks?, start?, end?} — copies automation only (no clips)", has_range, |e, p| auto_copy(e, p, Lanes::All, false, "edit.copy_all_automation")),
         cmd!(noundo "edit.copy_pan_automation", "Pan Automation", ["Edit", "Copy Special"], None, "{tracks?, start?, end?}", has_range, |e, p| auto_copy(e, p, Lanes::Pan, false, "edit.copy_pan_automation")),
         cmd!(noundo "edit.copy_plugin_automation", "Plugin Automation", ["Edit", "Copy Special"], None, "{tracks?, start?, end?}", has_range, |e, p| auto_copy(e, p, Lanes::Plugin, false, "edit.copy_plugin_automation")),
         cmd!(noundo "edit.copy_clip_gain", "Clip Gain", ["Edit", "Copy Special"], None, "{tracks?, start?, end?} — copies the clip gain curve under the selection", has_range, copy_clip_gain),
@@ -122,7 +122,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "edit.paste_to_current_automation",
             "To Current Automation Type",
             ["Edit", "Paste Special"],
-            None,
+            Some("Cmd+Ctrl+V"),
             "{tracks?, at?, param?} — pastes copied automation into the shown lane (track view) or `param`, rescaled to its range",
             has_automation_clipboard,
             paste_to_current_automation
