@@ -104,7 +104,7 @@ pub fn handle(app: &mut SoundApp, ctx: &egui::Context) {
             && !piano_roll_has_pointer(app);
         // Saving remains available while a text field has focus. Other global shortcuts must
         // stay out of text editing, otherwise typing can trigger commands in the background.
-        let clip_list_key = (matches!(key, Key::F | Key::D | Key::U | Key::Num1 | Key::Num2 | Key::Num3 | Key::Num4)
+        let clip_list_key = (matches!(key, Key::A | Key::F | Key::D | Key::U | Key::Num1 | Key::Num2 | Key::Num3 | Key::Num4)
             && mods_match(Modifiers::COMMAND | Modifiers::SHIFT, mods, mac))
             || (key == Key::K && mods_match(Modifiers::COMMAND | Modifiers::ALT, mods, mac));
         if wants_keyboard && command_for(key, mods, mac) != Some("session.save") && !edit_arrow_navigation && !clip_list_key {
@@ -154,6 +154,12 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
     app.counter_display = None;
     let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
     match key {
+        // Pro Tools Clip List: select all clips currently visible in the list.
+        Key::A if mods_match(Modifiers::COMMAND | Modifiers::SHIFT, m, mac) => {
+            crate::panels::select_all_visible(app);
+            app.ui.show_clip_list = true;
+            true
+        }
         // Pro Tools Clip List category filters. These categories are backed
         // by SoundCraft's clip/source model, so these are real filters rather
         // than aliases to an unrelated action.

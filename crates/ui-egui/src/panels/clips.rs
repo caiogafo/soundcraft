@@ -44,6 +44,30 @@ fn clip_rows(s: &soundcraft_model::Session, needle: &str, kind: &str) -> Vec<Cli
     sources.chain(clips).collect()
 }
 
+/// Select every source/clip currently visible under the Clip List's two filters.
+pub(crate) fn select_all_visible(app: &mut SoundApp) {
+    let needle = app.ui.clip_filter.to_lowercase();
+    let kind = app.ui.clip_filter_kind.clone();
+    let rows = clip_rows(app.engine.session(), &needle, &kind);
+    let s = app.engine.session_mut();
+    s.edit.selected_clips.clear();
+    s.edit.selected_sources.clear();
+    for row in rows {
+        match row {
+            ClipRow::Source(i) => {
+                if let Some(id) = s.sources.get(i).map(|src| src.id) {
+                    s.edit.selected_sources.push(id);
+                }
+            }
+            ClipRow::Clip { track, clip } => {
+                if let Some(id) = s.tracks.get(track).and_then(|t| t.clips().get(clip)).map(|c| c.id) {
+                    s.edit.selected_clips.push(id);
+                }
+            }
+        }
+    }
+}
+
 /// Clips panel with a filter and a revision-cached list of audio sources and clips.
 pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
     let t = Tokens::current();
