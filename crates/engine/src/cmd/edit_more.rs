@@ -1135,6 +1135,17 @@ mod tests {
     }
 
     #[test]
+    fn clip_gain_breakpoint_preserves_gain_at_insertion() {
+        let (mut e, t, ids) = session_with_clips(&[(0, 1000)]);
+        e.execute("clip.gain", &json!({"clip": ids[0].0, "db": -6.0})).unwrap();
+        e.execute("edit.select", &json!({"tracks": [t.0], "clips": [ids[0].0], "start": 500})).unwrap();
+        e.execute("edit.clip_gain_breakpoint", &json!({})).unwrap();
+        let c = e.session().track(t).unwrap().clips()[0].clone();
+        assert!((clip_db(&c, 500) + 6.0).abs() < 1e-3, "{c:?}");
+        assert!(c.gain_env.iter().any(|(at, _)| *at == 500), "{c:?}");
+    }
+
+    #[test]
     fn cut_clip_gain_can_be_pasted() {
         let (mut e, t, ids) = session_with_clips(&[(0, 1000), (2000, 1000), (4000, 1000)]);
         e.execute("clip.gain", &json!({"clip": ids[0].0, "db": -6.0})).unwrap();
