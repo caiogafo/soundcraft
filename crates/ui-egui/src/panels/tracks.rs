@@ -85,7 +85,13 @@ pub fn tracks_and_groups(app: &mut SoundApp, ui: &mut Ui) {
             let dresp = ui.interact(dot.expand(3.0), ui.scope_id().with(("vis", id)), Sense::click());
             ui.painter().circle(dot.center(), 3.5, if shown { t.visible_dot } else { Color32::TRANSPARENT }, Stroke::new(1.0, t.text_dim));
             if dresp.clicked() {
-                let _ = app.run("track.hide", json!({"tracks": [id], "hidden": shown}));
+                let mods = ui.input(|i| i.modifiers);
+                if mods.alt {
+                    let ids: Vec<u64> = app.engine.session().tracks.iter().map(|track| track.id.0).collect();
+                    let _ = app.run("track.hide", json!({"tracks": ids, "hidden": shown}));
+                } else {
+                    let _ = app.run("track.hide", json!({"tracks": [id], "hidden": shown}));
+                }
             }
             ui.painter().rect_filled(Rect::from_min_size(pos2(r.min.x + 20.0, r.min.y + 3.0), vec2(4.0, 11.0)), 0.0, rgb(color));
             ui.painter().with_clip_rect(r).text(
@@ -97,7 +103,15 @@ pub fn tracks_and_groups(app: &mut SoundApp, ui: &mut Ui) {
                 if shown { t.text } else { t.text_dim },
             );
             if resp.clicked() {
-                crate::edit_window::click_track(app, soundcraft_model::TrackId(id), ui.input(|i| i.modifiers), |_, _| true);
+                let mods = ui.input(|i| i.modifiers);
+                if mods.alt {
+                    let ids: Vec<u64> = app.engine.session().tracks.iter().map(|track| track.id.0).collect();
+                    let _ = app.run("edit.select", json!({"tracks": ids}));
+                } else if (ui.ctx().os().is_mac() && mods.ctrl || !ui.ctx().os().is_mac() && mods.command) && mods.shift && !mods.alt {
+                    let _ = app.run("view.scroll_into_view", json!({"track": id}));
+                } else {
+                    crate::edit_window::click_track(app, soundcraft_model::TrackId(id), mods, |_, _| true);
+                }
             }
             if resp.dragged() || resp.drag_stopped() {
                 drag_track(app, ui, r, id, resp.drag_stopped());

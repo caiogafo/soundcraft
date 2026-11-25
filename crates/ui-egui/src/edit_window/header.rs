@@ -154,7 +154,15 @@ fn name_plate(app: &mut SoundApp, ui: &mut Ui, track: &Track, head: Rect, select
     if nresp.double_clicked() {
         app.dialogs.open_rename_track(id, &track.name);
     } else if nresp.clicked() {
-        click_track(app, id, ui.input(|i| i.modifiers), in_edit_window);
+        let mods = ui.input(|i| i.modifiers);
+        if mods.alt {
+            let ids: Vec<u64> = app.engine.session().tracks.iter().map(|track| track.id.0).collect();
+            let _ = app.run("edit.select", json!({"tracks": ids}));
+        } else if (ui.ctx().os().is_mac() && mods.ctrl || !ui.ctx().os().is_mac() && mods.command) && mods.shift && !mods.alt {
+            let _ = app.run("view.scroll_into_view", json!({"track": id.0}));
+        } else {
+            click_track(app, id, mods, in_edit_window);
+        }
     }
     nresp.context_menu(|ui| track_context_menu(app, ui, id));
     // Drag the name plate to reorder tracks.
