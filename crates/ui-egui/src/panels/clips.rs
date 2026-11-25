@@ -170,14 +170,39 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
                     app.start_clip_audition(ClipId(id));
                 }
             }
-            if resp.clicked() && !alt_down {
-                select_clip_list_row(app, rows.as_ref(), row_index, id, whole, ui.input(|i| i.modifiers));
+            if resp.clicked() {
+                let mods = ui.input(|i| i.modifiers);
+                // Pro Tools' Option-Control/Alt-Start click spots the Clip List item at
+                // the current edit insertion. Reuse SoundCraft's placement command; for
+                // a timeline clip, keep its current track as the target when possible.
+                if mods.alt && (mods.ctrl || mods.command) && !mods.shift {
+                    spot_clip_list_row(app, id, whole);
+                } else if !mods.alt {
+                    select_clip_list_row(app, rows.as_ref(), row_index, id, whole, mods);
+                }
             }
         }
     });
     if app.clip_audition.is_some() && !ui.input(|i| i.pointer.primary_down()) {
         app.stop_clip_audition();
     }
+}
+
+fn spot_clip_list_row(app: &mut SoundApp, id: u64, whole: bool) {
+    let target = {
+        let s = app.engine.session();
+        if whole {
+            Some((SourceId(id), None))
+        } else {
+            s.find_clip(ClipId(id)).and_then(|(track, clip)| clip.source().map(|source| (source, Some(track.0))))
+        }
+    };
+    let Some((source, track)) = target else { return };
+    let mut params = json!({"source": source.0});
+    if let Some(track) = track {
+        params["track"] = json!(track);
+    }
+    let _ = app.run("clip.place_source", params);
 }
 
 /// Apply the Clip List's ordinary multi-selection modifiers without changing the timeline range.
