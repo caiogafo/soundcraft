@@ -562,7 +562,11 @@ fn clip_context_menu(app: &mut SoundApp, ui: &mut Ui, clip: Option<ClipId>) {
         ("Edit Lock/Unlock", "clip.edit_lock"),
         ("Time Lock/Unlock", "clip.time_lock"),
         ("Quantize to Grid", "clip.quantize_to_grid"),
+        ("Snap to Next", "edit.snap_next"),
+        ("Snap to Previous", "edit.snap_previous"),
         ("Render Clip Gain", "clip.gain_render"),
+        ("Bypass Clip Effects", "clip.effects_bypass"),
+        ("Render Clip Effects", "clip.effects_render"),
         ("Bring to Front", "clip.bring_to_front"),
         ("Send to Back", "clip.send_to_back"),
     ] {
@@ -574,6 +578,25 @@ fn clip_context_menu(app: &mut SoundApp, ui: &mut Ui, clip: Option<ClipId>) {
     if ui.button(crate::localization::text("Rename...")).clicked() {
         let name = app.engine.session().find_clip(c).map(|(_, x)| x.name.clone()).unwrap_or_default();
         app.dialogs.open_rename_clip(c, &name);
+    }
+    if ui.button(crate::localization::text("Spot to Edit Insertion")).clicked() {
+        let placement = app.engine.session().find_clip(c).and_then(|(track, clip)| clip.source().map(|source| (track, source)));
+        if let Some((track, source)) = placement {
+            let at = app.engine.session().edit.selection.start.max(0);
+            let _ = app.run("clip.place_source", json!({"source": source.0, "track": track.0, "at": at}));
+        }
+    }
+    if ui.button(crate::localization::text("Group Clips")).clicked() {
+        let _ = app.run("clip.group", target.clone());
+    }
+    if ui.button(crate::localization::text("Ungroup Clips")).clicked() {
+        let _ = app.run("clip.ungroup", target.clone());
+    }
+    if ui.button(crate::localization::text("Loop...")).clicked() {
+        let _ = app.dialogs.open_for_command(&app.engine, "clip.loop");
+    }
+    if ui.button(crate::localization::text("Fades...")).clicked() {
+        let _ = app.dialogs.open_for_command(&app.engine, "edit.fades_create");
     }
     if ui.button(crate::localization::text("Delete")).clicked() {
         let s = app.engine.session();
