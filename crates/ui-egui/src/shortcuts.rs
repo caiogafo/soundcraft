@@ -426,6 +426,37 @@ fn begin_counter_edit(app: &mut SoundApp) {
 fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
     let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
     match key {
+        // Pro Tools reuses Cmd+Ctrl (Control+Start on Windows) for Clip Gain
+        // and All Automation. Resolve that context-dependent chord by the
+        // selected track's displayed lane instead of letting the registry's
+        // first matching command steal it.
+        Key::B | Key::X | Key::C | Key::V if m.command && m.ctrl && m.shift && !m.alt => {
+            let automation = app
+                .engine
+                .session()
+                .edit
+                .selected_tracks
+                .iter()
+                .filter_map(|id| app.engine.session().track(*id))
+                .any(|track| !matches!(track.view.as_str(), "waveform" | "blocks" | "notes" | "regions"));
+            let id = if automation {
+                match key {
+                    Key::B => "edit.clear_all_automation",
+                    Key::X => "edit.cut_all_automation",
+                    Key::C => "edit.copy_all_automation",
+                    _ => "edit.paste_to_current_automation",
+                }
+            } else {
+                match key {
+                    Key::B => "edit.clear_clip_gain",
+                    Key::X => "edit.cut_clip_gain",
+                    Key::C => "edit.copy_clip_gain",
+                    _ => "edit.paste_clip_gain",
+                }
+            };
+            let _ = app.run(id, json!({}));
+            true
+        }
         // Pro Tools: Start/Ctrl+Shift+E adds a Clip Gain breakpoint. On
         // Windows/Linux the host exposes the Start key as the primary command
         // modifier, while macOS keeps the physical Control chord in the
