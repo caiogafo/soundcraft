@@ -196,6 +196,13 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             app.ui.focus_clip_filter = true;
             true
         }
+        // Pro Tools' Batch Rename uses physical Control+Shift+R on macOS, while the primary
+        // Command+Shift+R assignment remains SoundCraft's equivalent Auto Rename action.
+        Key::R if mac && m.ctrl && m.shift && !m.command && !m.alt => {
+            let clips = app.engine.session().edit.selected_clips.clone();
+            let _ = app.dialogs.open_auto_rename(&app.engine, clips);
+            true
+        }
         Key::D if mods_match(Modifiers::COMMAND | Modifiers::SHIFT, m, mac) => {
             app.ui.show_clip_list = true;
             app.ui.clip_filter.clear();

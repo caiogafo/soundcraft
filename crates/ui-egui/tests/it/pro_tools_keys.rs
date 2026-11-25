@@ -211,6 +211,16 @@ fn keyboard_shortcuts_window_keeps_export_clips_primary_chord_free() {
 }
 
 #[test]
+fn mac_clip_list_batch_rename_uses_the_physical_control_chord() {
+    let (ctx, mut app) = rig(OperatingSystem::Mac);
+    app.run("edit.select", json!({"tracks": ["Kick"]})).unwrap();
+    let clip = app.engine.session().track_by_name("Kick").unwrap().clips()[0].id;
+    app.run("edit.select", json!({"clips": [clip.0]})).unwrap();
+    press(&ctx, &mut app, Key::R, Modifiers { ctrl: true, shift: true });
+    assert_eq!(app.dialogs.open_name(), Some("auto_rename"));
+}
+
+#[test]
 fn primary_enter_adds_a_marker_without_opening_rename() {
     for (os, cmd) in OSES {
         let (ctx, mut app) = rig(os);
