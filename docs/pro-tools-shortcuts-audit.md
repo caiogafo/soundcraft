@@ -48,7 +48,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Track insert/send coverage now includes the guide's selected-track toggles: `Shift+A` bypasses all inserts, `Shift+2/3` bypasses A–E/F–J, `Shift+E/C/V/D/W` bypasses EQ/Dynamics/Reverb/Delay/Modulation, `Shift+L/5` mutes sends A–E/F–J, and `Shift+Q` mutes all sends.
 - Event coverage now includes `Cmd/Ctrl+I` for Identify Beat and `Alt+Shift+Z` for Retrospective Record, backed by the existing Event commands.
 - Group coverage now includes `Cmd/Ctrl+Shift+G` to suspend or restore all groups; `Cmd/Ctrl+G` remains New Group.
-- Clip List rename coverage now routes `Cmd/Ctrl+Shift+R` to SoundCraft's existing Auto Rename dialog for the selected clips; category/unused filters remain explicitly unimplemented.
+- Clip List coverage now routes `Cmd/Ctrl+Shift+F` to the existing name filter, `Cmd/Ctrl+Shift+D` clears that filter, and `Cmd/Ctrl+Shift+R` opens Auto Rename for selected clips; category/unused filters remain explicitly unimplemented.
 
 ## Completion rule
 
@@ -76,5 +76,5 @@ misleading:
 | Marker target/priority shortcuts | `Shift+[ / ]`, marker-name/comment priority clicks | SoundCraft maps `Shift+X` to follow the first selected track and `Shift+N` to toggle marker names/comments; it still has no independent target navigation or per-track display-priority state. |
 | Advanced automation editing | Automation write-on-stop, plugin automation dialogs and multi-playlist special paste | SoundCraft now maps Trim/Glide to Current and All Enabled onto its automation lanes; it still has no write-on-stop/plugin-automation state model for those shortcut families. |
 | Plugin insert/send assignment modifiers | Control/Start-click an insert or send; Control/Option-click all tracks | SoundCraft now exposes the selected-track keyboard bypass/mute families, but it has no equivalent insert/send assignment popup or click-modifier matrix. |
-| Clip List filters and bulk actions | Find/Clear, type filters, unused clips and Clip Definition export shortcuts | SoundCraft's Clip List has name filtering, selection and clear/place actions, but it lacks Pro Tools' typed category filters, unused-clip analysis and clip-definition export model. |
+| Clip List filters and bulk actions | Type filters, unused clips and Clip Definition export shortcuts | SoundCraft's Clip List now has Find/Clear shortcuts plus name filtering, selection and clear/place actions, but it lacks Pro Tools' typed category filters, unused-clip analysis and clip-definition export model. |
 | Numeric-keypad memory recall | `.` + number + `.` / numeric-keypad marker entry | The host exposes logical egui keys without a reliable keypad-vs-main-row distinction; SoundCraft therefore cannot safely assign these without stealing ordinary number-row shortcuts. |

@@ -104,7 +104,8 @@ pub fn handle(app: &mut SoundApp, ctx: &egui::Context) {
             && !piano_roll_has_pointer(app);
         // Saving remains available while a text field has focus. Other global shortcuts must
         // stay out of text editing, otherwise typing can trigger commands in the background.
-        if wants_keyboard && command_for(key, mods, mac) != Some("session.save") && !edit_arrow_navigation {
+        let clip_list_key = (key == Key::F || key == Key::D) && mods_match(Modifiers::COMMAND | Modifiers::SHIFT, mods, mac);
+        if wants_keyboard && command_for(key, mods, mac) != Some("session.save") && !edit_arrow_navigation && !clip_list_key {
             continue;
         }
         if repeat {
@@ -151,6 +152,19 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
     app.counter_display = None;
     let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
     match key {
+        // Pro Tools Clip List: Find Clip / Clear Find. SoundCraft already has
+        // the equivalent name filter; make the official chords focus it.
+        Key::F if mods_match(Modifiers::COMMAND | Modifiers::SHIFT, m, mac) => {
+            app.ui.show_clip_list = true;
+            app.ui.focus_clip_filter = true;
+            true
+        }
+        Key::D if mods_match(Modifiers::COMMAND | Modifiers::SHIFT, m, mac) => {
+            app.ui.show_clip_list = true;
+            app.ui.clip_filter.clear();
+            app.ui.focus_clip_filter = true;
+            true
+        }
         // Pro Tools: Control+Space pauses; on Linux egui reports the physical
         // Control chord as both `ctrl` and `command`, so check it before Record.
         Key::Space if m.ctrl && m.command && !m.alt && !m.shift => {

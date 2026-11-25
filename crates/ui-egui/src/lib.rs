@@ -82,6 +82,11 @@ pub struct UiState {
     pub window: MainWindow,
     pub show_tracks_list: bool,
     pub show_clip_list: bool,
+    /// Text currently used by the Clip List name filter.
+    pub clip_filter: String,
+    /// One-frame request used by the Pro Tools Find/Clear Clip List shortcuts.
+    #[serde(skip)]
+    pub focus_clip_filter: bool,
     pub show_transport: bool,
     pub show_memory_locations: bool,
     pub show_big_counter: bool,
@@ -165,6 +170,8 @@ impl Default for UiState {
             window: MainWindow::Edit,
             show_tracks_list: true,
             show_clip_list: true,
+            clip_filter: String::new(),
+            focus_clip_filter: false,
             show_transport: false,
             show_memory_locations: false,
             show_big_counter: false,

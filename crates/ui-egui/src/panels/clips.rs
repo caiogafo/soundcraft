@@ -32,10 +32,13 @@ fn clip_rows(s: &soundcraft_model::Session, needle: &str) -> Vec<ClipRow> {
 pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
     let t = Tokens::current();
     panel_header(ui, "CLIPS");
-    let fkey = egui::Id::unique("clip_filter");
-    let mut filter: String = ui.ctx().memory(|m| m.data.get_temp(fkey)).unwrap_or_default();
-    ui.add(egui::TextEdit::singleline(&mut filter).hint_text(crate::localization::text("🔍 Find clips")).desired_width(f32::INFINITY));
-    ui.ctx().memory_mut(|m| m.data.insert_temp(fkey, filter.clone()));
+    let fkey = ui.make_persistent_id("soundcraft.clip_filter");
+    ui.add(egui::TextEdit::singleline(&mut app.ui.clip_filter).id(fkey).hint_text(crate::localization::text("🔍 Find clips")).desired_width(f32::INFINITY));
+    if app.ui.focus_clip_filter {
+        ui.ctx().memory_mut(|m| m.request_focus(fkey));
+        app.ui.focus_clip_filter = false;
+    }
+    let filter = app.ui.clip_filter.clone();
     let needle = filter.to_lowercase();
     let rkey = egui::Id::unique("clip_rows");
     let revision = app.engine.revision;
