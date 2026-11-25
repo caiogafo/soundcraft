@@ -49,6 +49,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Event coverage now includes `Cmd/Ctrl+I` for Identify Beat and `Alt+Shift+Z` for Retrospective Record, backed by the existing Event commands.
 - Group coverage now includes `Cmd/Ctrl+Shift+G` to suspend or restore all groups; `Cmd/Ctrl+G` remains New Group.
 - Clip List coverage now routes `Cmd/Ctrl+Shift+F` to the existing name filter, `Cmd/Ctrl+Shift+D` clears that filter, and `Cmd/Ctrl+Shift+R` opens Auto Rename for selected clips; category/unused filters remain explicitly unimplemented.
+- Setup coverage now maps `Cmd/Ctrl+Shift+K` to the existing Keyboard Shortcuts window; editing, conflict resolution, presets and export of custom assignments remain unavailable.
 
 ## Completion rule
 
@@ -72,7 +73,7 @@ misleading:
 | MIDI Operations and Step Input | Numeric duration keys, panel navigation | SoundCraft has a MIDI Operations window and maps Quantize/Transpose/Split Notes/Duration actions, but it lacks Pro Tools' numeric-keypad Step Input focus model. |
 | Workspace/Browser | Workspace search, browser navigation and drag/drop modifier matrix | No Workspace/Soundbase browser model; ordinary file drag/drop is implemented separately in the Edit window. |
 | Deck/Satellite/ICON control surfaces | Deck, Satellite and hardware-specific modifier shortcuts | No external deck, satellite or ICON control-surface integration exists. |
-| Custom Keyboard Shortcuts window | Setup > Keyboard Shortcuts, conflict resolver, presets and export | SoundCraft has a command registry, but no user-editable shortcut-assignment window/preset format equivalent to Pro Tools. |
+| Custom Keyboard Shortcuts window | Setup > Keyboard Shortcuts, conflict resolver, presets and export | SoundCraft opens a read-only command/shortcut catalogue, but has no user-editable assignment window or preset format equivalent to Pro Tools. |
 | Marker target/priority shortcuts | `Shift+[ / ]`, marker-name/comment priority clicks | SoundCraft maps `Shift+X` to follow the first selected track and `Shift+N` to toggle marker names/comments; it still has no independent target navigation or per-track display-priority state. |
 | Advanced automation editing | Automation write-on-stop, plugin automation dialogs and multi-playlist special paste | SoundCraft now maps Trim/Glide to Current and All Enabled onto its automation lanes; it still has no write-on-stop/plugin-automation state model for those shortcut families. |
 | Plugin insert/send assignment modifiers | Control/Start-click an insert or send; Control/Option-click all tracks | SoundCraft now exposes the selected-track keyboard bypass/mute families, but it has no equivalent insert/send assignment popup or click-modifier matrix. |

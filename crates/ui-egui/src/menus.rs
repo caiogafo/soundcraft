@@ -71,7 +71,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, Option<&str>)] = &[
     ("window.playback_engine", "Playback Engine", "", None),
     ("ui.audio_device", "Audio Device", "", None),
     ("window.io_setup", "I/O Setup", "", None),
-    ("window.shortcuts", "Keyboard Shortcuts", "", None),
+    ("window.shortcuts", "Keyboard Shortcuts", "", Some("Cmd+Shift+K")),
     ("view.mix_section", "Mix Window View", "", None),
     ("view.scroll_into_view", "Scroll Into View", "", None),
     ("ui.new_tracks_dialog", "New Tracks…", "", None),
