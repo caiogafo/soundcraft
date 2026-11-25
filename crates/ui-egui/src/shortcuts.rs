@@ -222,6 +222,11 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("window.toggle_mix_edit", json!({}));
             true
         }
+        // Pro Tools: Control/Start+E toggles Zoom Toggle.
+        Key::E if mods_match(Modifiers::COMMAND, m, mac) => {
+            let _ = app.run("view.zoom_toggle", json!({}));
+            true
+        }
         Key::Enter if plain => {
             if let Ok(result) = app.run("markers.add", json!({}))
                 && let Some(id) = result["id"].as_u64()
@@ -263,10 +268,20 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("edit.tool", json!({"tool": tool_key(app, key)}));
             true
         }
-        // Cmd+6 / Cmd+7 (Ctrl off macOS) are Pencil and the Smart Tool. Cmd+1–5 keep their window and Session
-        // keys: egui reports the numeric keypad's digits as the main keyboard's, so the two can't be told apart.
-        Key::Num6 | Key::Num7 if mods_match(Modifiers::COMMAND, m, mac) => {
-            let tool = if key == Key::Num6 { "pencil" } else { "smart" };
+        // Pro Tools' computer-keyboard tool family (the keypad cannot be separated
+        // from the main number row by egui, so these use the application's primary chord).
+        Key::Num1 | Key::Num2 | Key::Num3 | Key::Num5 | Key::Num6 | Key::Num7 | Key::Plus | Key::Equals
+            if mods_match(Modifiers::COMMAND, m, mac) =>
+        {
+            let tool = match key {
+                Key::Num1 => "zoom",
+                Key::Num2 => "trim",
+                Key::Num3 => "selector",
+                Key::Num5 => "scrubber",
+                Key::Num6 => "pencil",
+                Key::Num7 => "smart",
+                _ => "grabber",
+            };
             let _ = app.run("edit.tool", json!({"tool": tool}));
             true
         }
