@@ -234,7 +234,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "edit.tce_to_timeline",
             "TCE Edit to Timeline Selection",
             ["Edit"],
-            None,
+            Some("Alt+Shift+U"),
             "{clip?, start?, end?} — time-stretches the clip to fill the timeline selection (pitch preserved)",
             has_selection,
             tce
