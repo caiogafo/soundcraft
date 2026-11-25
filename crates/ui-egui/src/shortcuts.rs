@@ -322,6 +322,20 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             select_adjacent_playlist(app, key == Key::ArrowDown);
             true
         }
+        // Pro Tools auditioning: Alt plays by pre-roll, Cmd/Ctrl by post-roll,
+        // and both together through the selected edge.
+        Key::ArrowLeft | Key::ArrowRight if m.alt && !m.command && !m.ctrl && !m.shift => {
+            app.audition_selection_edge(key == Key::ArrowRight, true, false);
+            true
+        }
+        Key::ArrowLeft | Key::ArrowRight if mods_match(Modifiers::COMMAND, m, mac) && !m.alt && !m.shift => {
+            app.audition_selection_edge(key == Key::ArrowRight, false, true);
+            true
+        }
+        Key::ArrowLeft | Key::ArrowRight if mods_match(Modifiers::COMMAND | Modifiers::ALT, m, mac) && !m.shift => {
+            app.audition_selection_edge(key == Key::ArrowRight, true, true);
+            true
+        }
         // Extend Edit Down is Control+Shift+;, which macOS sends as Control+:.
         Key::Semicolon | Key::Colon if mac && m.ctrl && m.shift && !m.alt && !m.command => {
             let _ = app.run("edit.extend_selection_down", json!({}));

@@ -52,6 +52,22 @@ impl SoundApp {
         self.start_play(from.max(0), end.map(|to| to.max(from.max(0) + 1)), None);
     }
 
+    /// Audition one edit-selection edge using the configured pre/post-roll values.
+    pub(crate) fn audition_selection_edge(&mut self, edge_end: bool, pre: bool, post: bool) {
+        let (sel, pre_roll, post_roll) = {
+            let s = self.engine.session();
+            (
+                s.edit.selection,
+                if pre && s.edit.pre_post_roll { s.edit.pre_roll } else { 0 },
+                if post && s.edit.pre_post_roll { s.edit.post_roll } else { 0 },
+            )
+        };
+        let edge = if sel.is_empty() { sel.start } else if edge_end { sel.end } else { sel.start };
+        let from = edge.saturating_sub(pre_roll).max(0);
+        let end = (pre || post).then_some(edge.saturating_add(post_roll).max(from + 1));
+        self.start_play(from, end, None);
+    }
+
     pub(crate) fn stop_play(&mut self) {
         if let Some(p) = &self.player {
             // Half-speed is a separate command. Stop must not leave that rate for the next Play.

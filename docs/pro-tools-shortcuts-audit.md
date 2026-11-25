@@ -31,6 +31,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Transport conflicts audited against the official guide: `Ctrl+Space` pauses, `Alt+Space` toggles Transport Online, and `Ctrl+J`/`Cmd+J` toggles Transport Online according to the platform modifier model.
 - Session boundary navigation now covers modified Enter/Return: return to zero, go to session end, and extend the edit selection to either boundary; plain Enter remains marker creation plus name entry.
 - Playlist/navigation coverage now includes `Shift+Up/Down` for the previous/next alternate playlist and `Shift+T` for Track/Edit selection linking.
+- Auditioning coverage now uses the configured Pre/Post-Roll values: `Alt+Left/Right` auditions before an edge, `Ctrl/Cmd+Left/Right` after it, and the combined chord covers the edge through both rolls.
 
 ## Completion rule
 
