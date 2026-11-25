@@ -417,6 +417,10 @@ fn commands_focus(app: &mut SoundApp, key: Key, shift: bool) -> bool {
         Key::D => "edit.fade_to_start",
         Key::G => "edit.fade_to_end",
         Key::F => "edit.fades_create",
+        Key::Num6 | Key::Num7 | Key::Num8 | Key::Num9 => {
+            play_edit_boundary(app, key);
+            return true;
+        }
         Key::Q => {
             locate_selection_edge(app, false);
             return true;
@@ -518,6 +522,28 @@ fn move_selected_clip_anchor(app: &mut SoundApp, key: Key) {
         }
     };
     let _ = app.run("edit.move_clips", json!({"to": target}));
+}
+
+/// Commands Focus playback audition family: 6/8 play to an edit boundary;
+/// 7/9 play from one. A bounded audition uses the current position as its other edge.
+fn play_edit_boundary(app: &mut SoundApp, key: Key) {
+    let (sel, current) = {
+        let s = app.engine.session();
+        (s.edit.selection, app.position())
+    };
+    match key {
+        Key::Num6 => {
+            let from = current.min(sel.start);
+            app.play_from_to(from, Some(sel.start.max(from + 1)));
+        }
+        Key::Num7 => app.play_from_to(sel.start, None),
+        Key::Num8 => {
+            let from = current.min(sel.end);
+            app.play_from_to(from, Some(sel.end.max(from + 1)));
+        }
+        Key::Num9 => app.play_from_to(sel.end, None),
+        _ => {}
+    }
 }
 
 /// Move the edit selection to the track above/below (P / ;).

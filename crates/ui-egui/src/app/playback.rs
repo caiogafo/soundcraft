@@ -47,6 +47,11 @@ impl SoundApp {
         self.edit_layout.last_follow_to = None;
     }
 
+    /// Start a bounded or unbounded playback range from a keyboard shortcut.
+    pub(crate) fn play_from_to(&mut self, from: Samples, end: Option<Samples>) {
+        self.start_play(from.max(0), end.map(|to| to.max(from.max(0) + 1)), None);
+    }
+
     pub(crate) fn stop_play(&mut self) {
         if let Some(p) = &self.player {
             // Half-speed is a separate command. Stop must not leave that rate for the next Play.
