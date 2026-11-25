@@ -249,10 +249,28 @@ pub fn specs() -> Vec<CommandSpec> {
             coalesce_clip_gain_to_volume
         ),
         cmd!(
+            "edit.automation_trim_to_current",
+            "Trim to Current",
+            ["Edit", "Automation"],
+            Some("Cmd+Shift+/"),
+            "{tracks?, start?, end?} — offsets the displayed automation lane in the selection so it starts at the current control value",
+            has_range,
+            |e, p| trim_glide_current(e, p, false, "edit.automation_trim_to_current")
+        ),
+        cmd!(
+            "edit.automation_glide_to_current",
+            "Glide to Current",
+            ["Edit", "Automation"],
+            Some("Alt+/"),
+            "{tracks?, start?, end?} — ramps the displayed automation lane from its value at the start to the current value at the end",
+            has_range,
+            |e, p| trim_glide_current(e, p, true, "edit.automation_glide_to_current")
+        ),
+        cmd!(
             "edit.automation_trim_to_all",
             "Trim to All Enabled",
             ["Edit", "Automation"],
-            None,
+            Some("Cmd+Alt+Shift+/"),
             "{tracks?, start?, end?} — offsets every enabled lane in the selection so it starts at the current control value",
             has_range,
             |e, p| trim_glide(e, p, false, false, "edit.automation_trim_to_all")
@@ -261,7 +279,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "edit.automation_glide_to_all",
             "Glide to All Enabled",
             ["Edit", "Automation"],
-            None,
+            Some("Alt+Shift+/"),
             "{tracks?, start?, end?} — ramps every enabled lane from its value at the start to the current value at the end",
             has_range,
             |e, p| trim_glide(e, p, true, false, "edit.automation_glide_to_all")
@@ -919,6 +937,21 @@ fn trim_glide(e: &mut Engine, p: &Value, glide: bool, pan_only: bool, id: &str) 
             trim_lane(tr, &param, r, glide);
             lanes += 1;
         }
+    }
+    Ok(json!({"lanes": lanes}))
+}
+
+/// Trim or glide only the lane shown by the selected track's Track View selector.
+fn trim_glide_current(e: &mut Engine, p: &Value, glide: bool, id: &str) -> Result<Value> {
+    let tracks = tracks_required(e, id, p)?;
+    let r = nonempty_range(e, p, id)?;
+    let s = e.session_mut();
+    let mut lanes = 0;
+    for t in &tracks {
+        let Some(tr) = s.track_mut(*t) else { continue };
+        let param = AutoParam::parse(&tr.view).unwrap_or(AutoParam::Volume);
+        trim_lane(tr, &param, r, glide);
+        lanes += 1;
     }
     Ok(json!({"lanes": lanes}))
 }
