@@ -172,6 +172,34 @@ fn triple_modifier_marker_shortcuts_toggle_ruler_and_folder_lines() {
 }
 
 #[test]
+fn mac_marker_zone_shortcuts_move_and_extend_the_selection() {
+    let (ctx, mut app) = rig(OperatingSystem::Mac);
+    let marker = Modifiers { command: true, alt: true, ..Modifiers::NONE };
+
+    press(&ctx, &mut app, Key::P, marker);
+    assert_eq!(app.engine.session().edit.value("selection.marker_lane.top", 0.0), 1.0);
+    assert_eq!(app.engine.session().edit.value("selection.marker_lane.bottom", 0.0), 1.0);
+
+    press(&ctx, &mut app, Key::Semicolon, Modifiers { shift: true, ..marker });
+    assert_eq!(app.engine.session().edit.value("selection.marker_lane.top", 0.0), 1.0);
+    assert_eq!(app.engine.session().edit.value("selection.marker_lane.bottom", 0.0), 2.0);
+}
+
+#[test]
+fn primary_p_resolves_print_score_and_auto_spot_by_edit_content() {
+    let (ctx, mut app) = rig(OperatingSystem::Mac);
+    app.run("edit.select", json!({"tracks": ["Keys"]})).unwrap();
+    press(&ctx, &mut app, Key::P, MAC_CMD);
+    assert_eq!(app.dialogs.open_name(), Some("path"), "MIDI content opens Print Score's save dialog");
+
+    let (ctx, mut app) = rig(OperatingSystem::Mac);
+    app.run("edit.select", json!({"tracks": ["Kick"]})).unwrap();
+    assert!(!app.engine.session().edit.flag("options.auto_spot_clips"));
+    press(&ctx, &mut app, Key::P, MAC_CMD);
+    assert!(app.engine.session().edit.flag("options.auto_spot_clips"), "audio content toggles Auto-Spot Clips");
+}
+
+#[test]
 fn primary_enter_adds_a_marker_without_opening_rename() {
     for (os, cmd) in OSES {
         let (ctx, mut app) = rig(os);
