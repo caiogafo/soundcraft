@@ -199,6 +199,25 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("options.markers_follow_edit", json!({}));
             true
         }
+        // Playlist target display and recent-playlist toggle.
+        Key::ArrowRight if m.shift && !m.command && !m.ctrl && !m.alt => {
+            let _ = app.run("track.show_target_playlist", json!({}));
+            true
+        }
+        Key::ArrowLeft if m.shift && !m.command && !m.ctrl && !m.alt => {
+            let _ = app.run("track.toggle_recent_playlist", json!({}));
+            true
+        }
+        // Playlist creation/duplication. The engine applies these to the selected
+        // tracks, which is the available SoundCraft equivalent of the Pro Tools scope.
+        Key::Backslash if m.ctrl && m.command && !m.alt && !m.shift => {
+            let _ = app.run("track.playlist_new", json!({}));
+            true
+        }
+        Key::Backslash if m.command && !m.ctrl && !m.alt && !m.shift => {
+            let _ = app.run("track.playlist_duplicate", json!({}));
+            true
+        }
         Key::Equals if m.command && !(mac && m.ctrl) => {
             let _ = app.run("window.toggle_mix_edit", json!({}));
             true

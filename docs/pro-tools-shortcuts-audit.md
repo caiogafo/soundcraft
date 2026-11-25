@@ -35,6 +35,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Edit-selection display coverage now includes `Shift+F` for containing folders and `Shift+U` for the Marker Track lane.
 - Marker option coverage now includes `Shift+Y` for Marker Follows Edit.
 - Vertical-navigation conflict coverage now prioritizes MIDI Record Enable movement on `Ctrl/Cmd+Up/Down` when a MIDI/Instrument track is armed; otherwise the chord remains Track Height.
+- Target Playlist coverage now uses the existing target-playlist commands: `Shift+Right` shows the target, `Shift+Left` toggles the recent playlist, and the backslash creation/duplication chords route to the selected-track playlist model. The engine cannot distinguish every Pro Tools “all tracks” scope on keyboards where Control and Command are collapsed by the host.
 
 ## Completion rule
 
