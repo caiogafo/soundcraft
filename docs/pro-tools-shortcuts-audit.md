@@ -29,6 +29,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - The Commands Keyboard Focus batch now covers playlist display (`-`), timeline-selection edge locate (`Q/W`), clip start/sync/end placement (`Y/U/I`, `H/J/K`) and earlier-by-grid nudge (`\\`).
 - The same family now covers edit-boundary audition: `6/8` play to the edit start/end and `7/9` play from the edit start/end.
 - Transport conflicts audited against the official guide: `Ctrl+Space` pauses, `Alt+Space` toggles Transport Online, and `Ctrl+J`/`Cmd+J` toggles Transport Online according to the platform modifier model.
+- Session boundary navigation now covers modified Enter/Return: return to zero, go to session end, and extend the edit selection to either boundary; plain Enter remains marker creation plus name entry.
 
 ## Completion rule
 
