@@ -178,6 +178,11 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("options.transport_online", json!({}));
             true
         }
+        // Pro Tools: Shift+T links the Track and Edit selections.
+        Key::T if m.shift && !m.command && !m.ctrl && !m.alt => {
+            let _ = app.run("options.link_track_edit", json!({}));
+            true
+        }
         Key::Equals if m.command && !(mac && m.ctrl) => {
             let _ = app.run("window.toggle_mix_edit", json!({}));
             true
@@ -310,6 +315,13 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run(id, if tracks.is_empty() { json!({}) } else { json!({"tracks": tracks}) });
             true
         }
+        // Playlist compositing: move the selected track's edit cursor through the
+        // previous/next playlist. SoundCraft's playlist selector is the equivalent
+        // state transition even when the lane itself is not currently expanded.
+        Key::ArrowUp | Key::ArrowDown if m.shift && !m.command && !m.ctrl && !m.alt => {
+            select_adjacent_playlist(app, key == Key::ArrowDown);
+            true
+        }
         // Extend Edit Down is Control+Shift+;, which macOS sends as Control+:.
         Key::Semicolon | Key::Colon if mac && m.ctrl && m.shift && !m.alt && !m.command => {
             let _ = app.run("edit.extend_selection_down", json!({}));
@@ -368,6 +380,25 @@ fn extend_session_boundary(app: &mut SoundApp, end: bool) {
     };
     let range = if end { soundcraft_time::Range::new(sel.start, boundary.max(sel.start)) } else { soundcraft_time::Range::new(0, sel.end) };
     let _ = app.run("edit.select", json!({"start": range.start, "end": range.end}));
+}
+
+/// Select the previous/next alternate playlist on the selected playlist tracks.
+fn select_adjacent_playlist(app: &mut SoundApp, next: bool) {
+    let targets: Vec<(u64, usize)> = {
+        let s = app.engine.session();
+        s.tracks
+            .iter()
+            .filter(|t| s.edit.selected_tracks.contains(&t.id) && t.kind.has_playlist() && t.playlists.len() > 1)
+            .filter_map(|t| {
+                let last = t.playlists.len().saturating_sub(1);
+                let index = if next { t.active_playlist.saturating_add(1).min(last) } else { t.active_playlist.saturating_sub(1) };
+                (index != t.active_playlist).then_some((t.id.0, index))
+            })
+            .collect()
+    };
+    for (track, index) in targets {
+        let _ = app.run("track.playlist_select", json!({"track": track, "index": index}));
+    }
 }
 
 /// The zoom keys [`fixed`] handles, shared with [`repeating_command`]: T / R zoom the timeline in / out
