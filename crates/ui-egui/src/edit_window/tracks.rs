@@ -257,6 +257,9 @@ pub(crate) fn track_context_menu(app: &mut SoundApp, ui: &mut Ui, id: TrackId) {
     if ui.button(crate::localization::text("Scroll Into View")).clicked() {
         let _ = app.run("view.scroll_into_view", json!({"track": id.0}));
     }
+    if ui.button(crate::localization::text("Save Track Preset...")).clicked() {
+        let _ = app.dialogs.open_for_command(&app.engine, "track.save_preset");
+    }
     ui.separator();
     ui.menu_button(crate::localization::text("Track Height"), |ui| {
         for h in TrackHeight::ALL {
