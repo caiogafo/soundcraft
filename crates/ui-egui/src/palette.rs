@@ -11,23 +11,72 @@ pub struct PaletteState {
 }
 
 struct Entry {
-    id: String,
+    action: EntryAction,
     label: String,
     path: String,
     shortcut: String,
 }
 
-fn entries() -> Vec<Entry> {
+#[derive(Debug, Clone)]
+enum EntryAction {
+    Command { id: String, path: String },
+    SelectTrack(u64),
+    SelectClip(u64),
+    RecallMarker(u32),
+    ToggleGroup(u64),
+}
+
+fn entries(app: &SoundApp) -> Vec<Entry> {
     let mut v: Vec<Entry> = soundcraft_engine::command_specs()
         .iter()
         .map(|c| Entry {
-            id: c.id.to_string(), label: c.label.to_string(), path: c.menu.join(" › "), shortcut: c.shortcut.unwrap_or("").to_string()
+            action: EntryAction::Command { id: c.id.to_string(), path: c.menu.join(" › ") },
+            label: c.label.to_string(),
+            path: c.menu.join(" › "),
+            shortcut: c.shortcut.unwrap_or("").to_string(),
         })
         .collect();
     for (id, label, path, sc) in crate::menus::UI_COMMANDS {
-        v.push(Entry { id: id.to_string(), label: label.to_string(), path: path.replace(" > ", " › "), shortcut: sc.unwrap_or("").to_string() });
+        let path = path.replace(" > ", " › ");
+        v.push(Entry { action: EntryAction::Command { id: id.to_string(), path: path.clone() }, label: label.to_string(), path, shortcut: sc.unwrap_or("").to_string() });
+    }
+    let s = app.engine.session();
+    for track in &s.tracks {
+        v.push(Entry { action: EntryAction::SelectTrack(track.id.0), label: track.name.clone(), path: "Tracks".into(), shortcut: String::new() });
+    }
+    for clip in s.all_clips() {
+        v.push(Entry { action: EntryAction::SelectClip(clip.id.0), label: clip.name.clone(), path: "Clips".into(), shortcut: String::new() });
+    }
+    for marker in &s.markers {
+        v.push(Entry {
+            action: EntryAction::RecallMarker(marker.number),
+            label: if marker.name.is_empty() { format!("Marker {}", marker.number) } else { marker.name.clone() },
+            path: "Memory Locations".into(),
+            shortcut: String::new(),
+        });
+    }
+    for group in &s.groups {
+        v.push(Entry { action: EntryAction::ToggleGroup(group.id.0), label: group.name.clone(), path: "Groups".into(), shortcut: String::new() });
     }
     v
+}
+
+fn run_entry(app: &mut SoundApp, entry: &EntryAction) {
+    match entry {
+        EntryAction::Command { id, path } => crate::menus::invoke_menu(app, id, &path.replace(" › ", " > ")),
+        EntryAction::SelectTrack(id) => {
+            let _ = app.run("edit.select", serde_json::json!({"tracks": [id]}));
+        }
+        EntryAction::SelectClip(id) => {
+            let _ = app.run("edit.select", serde_json::json!({"clips": [id]}));
+        }
+        EntryAction::RecallMarker(number) => {
+            let _ = app.run("markers.recall", serde_json::json!({"number": number}));
+        }
+        EntryAction::ToggleGroup(id) => {
+            let _ = app.run("track.group_toggle", serde_json::json!({"group": id}));
+        }
+    }
 }
 
 /// Subsequence match score (higher is better), or None.
@@ -63,7 +112,7 @@ pub fn show(app: &mut SoundApp, ctx: &egui::Context) {
         return;
     }
     let t = Tokens::current();
-    let mut run: Option<String> = None;
+    let mut run: Option<EntryAction> = None;
     let mut close = ctx.input(|i| i.key_pressed(Key::Escape));
     egui::Window::new(crate::localization::text("Search"))
         .id(egui::Id::unique("Search"))
@@ -81,12 +130,12 @@ pub fn show(app: &mut SoundApp, ctx: &egui::Context) {
             );
             r.request_focus();
             let q = app.palette.query.trim().to_string();
-            let mut hits: Vec<(i32, Entry)> = entries()
+            let mut hits: Vec<(i32, Entry)> = entries(app)
                 .into_iter()
                 .filter_map(|e| {
                     let label = crate::localization::text(&e.label);
                     let path = e.path.split(" › ").map(crate::localization::text).collect::<Vec<_>>().join(" › ");
-                    score(&format!("{label} {path} {} {} {}", e.label, e.path, e.id), &q).map(|s| (s, e))
+                    score(&format!("{label} {path} {} {}", e.label, e.path), &q).map(|s| (s, e))
                 })
                 .collect();
             hits.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.label.cmp(&b.1.label)));
@@ -113,17 +162,16 @@ pub fn show(app: &mut SoundApp, ctx: &egui::Context) {
                     l
                 });
                 if resp.inner.clicked() {
-                    run = Some(e.id.clone());
+                    run = Some(e.action.clone());
                 }
             }
             if enter && let Some((_, e)) = hits.get(app.palette.selected) {
-                run = Some(e.id.clone());
+                run = Some(e.action.clone());
             }
         });
-    if let Some(id) = run {
+    if let Some(action) = run {
         close = true;
-        let path = entries().into_iter().find(|e| e.id == id).map(|e| e.path.replace(" › ", " > ")).unwrap_or_default();
-        crate::menus::invoke_menu(app, &id, &path);
+        run_entry(app, &action);
     }
     if close {
         app.ui.show_search = false;
