@@ -54,6 +54,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Track coverage now maps `Option/Alt+Shift+P` to Save Track Preset, using SoundCraft's existing path dialog and JSON preset writer.
 - Event/Clip coverage now maps `Option/Alt+Shift+U` to TCE Edit to Timeline and `Cmd/Ctrl+8` to Beat Analysis. Beat Analysis uses the main-key fallback because egui does not expose keypad identity separately; Pro Tools documents the latter as a numeric-keypad shortcut. Elastic Properties was already mapped to `Option/Alt+5` for the same reason.
 - Window coverage now maps macOS `Control+=` and `Control+Option+Shift+=` to the existing MIDI Editor panel; the docked and undocked Pro Tools variants converge on SoundCraft's single docked MIDI Editor.
+- Fades coverage now uses the guide's macOS `Control+D`/`Control+G` for Fade to Start/End; the prior Command+Control registrations were corrected.
 - Event coverage now includes `Cmd/Ctrl+I` for Identify Beat and `Alt+Shift+Z` for Retrospective Record, backed by the existing Event commands.
 - Group coverage now includes `Cmd/Ctrl+Shift+G` to suspend or restore all groups; `Cmd/Ctrl+G` remains New Group.
 - Clip List coverage now routes `Cmd/Ctrl+Shift+F` to the existing name filter, `Cmd/Ctrl+Shift+D` clears that filter, and `Cmd/Ctrl+Shift+R` opens Auto Rename for selected clips; category and unused filters are covered below.

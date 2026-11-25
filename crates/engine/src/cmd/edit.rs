@@ -135,14 +135,14 @@ pub fn specs() -> Vec<CommandSpec> {
             fades_create
         ),
         cmd!("edit.fades_delete", "Delete", ["Edit", "Fades"], None, "{tracks?, start?, end?}", has_selection, fades_delete),
-        cmd!("edit.fade_to_start", "Fade to Start", ["Edit", "Fades"], Some("Cmd+Ctrl+D"), "{}", has_selection, |e, p| fade_to(e, p, true)),
-        cmd!("edit.fade_to_end", "Fade to End", ["Edit", "Fades"], Some("Cmd+Ctrl+G"), "{}", has_selection, |e, p| fade_to(e, p, false)),
+        cmd!("edit.fade_to_start", "Fade to Start", ["Edit", "Fades"], Some("Ctrl+D"), "{}", has_selection, |e, p| fade_to(e, p, true)),
+        cmd!("edit.fade_to_end", "Fade to End", ["Edit", "Fades"], Some("Ctrl+G"), "{}", has_selection, |e, p| fade_to(e, p, false)),
         cmd!("edit.nudge", "Nudge", [], Some("Plus/Minus"), "{direction: 1|-1, count?: n, next?: bool (next larger value)}", has_selection, nudge),
         cmd!(
             noundo "edit.mode",
             "Edit Mode",
             [],
-            Some("F1-F4, Alt+1-4, `"),
+            Some("F1-F4, `"),
             "{mode: shuffle|slip|spot|grid|relative_grid, snap_to_grid?: bool (Shuffle, Slip and Spot)}",
             always,
             set_mode
