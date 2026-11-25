@@ -20,6 +20,15 @@ pub fn specs() -> Vec<CommandSpec> {
             new_track
         ),
         cmd!("track.group", "Group...", ["Track"], Some("Cmd+G"), "{name?, tracks?, edit?: true, mix?: true}", has_selection, group),
+        cmd!(
+            "track.groups_suspend_all",
+            "Suspend All Groups",
+            ["Track", "Groups"],
+            Some("Cmd+Shift+G"),
+            "{value?: bool} (toggles all groups when omitted)",
+            always,
+            suspend_all_groups
+        ),
         cmd!("track.ungroup", "Delete Group", [], None, "{group: id|name}", always, delete_group),
         cmd!("track.group_toggle", "Toggle Group Active", [], None, "{group: id|name}", always, toggle_group),
         cmd!("track.group_modify", "Modify Group", [], None, "{group: id|name, name?, tracks?, edit?, mix?}", always, modify_group),
@@ -351,6 +360,15 @@ fn toggle_group(e: &mut Engine, p: &Value) -> Result<Value> {
         active = gr.active;
     }
     Ok(json!({"active": active}))
+}
+
+fn suspend_all_groups(e: &mut Engine, p: &Value) -> Result<Value> {
+    let s = e.session_mut();
+    let want_active = p.get("value").and_then(Value::as_bool).unwrap_or_else(|| !s.groups.iter().all(|g| !g.active));
+    for group in &mut s.groups {
+        group.active = want_active;
+    }
+    Ok(json!({"active": want_active, "groups": s.groups.len()}))
 }
 
 /// Change an existing group's name, membership and Edit/Mix linking. Omitted fields keep their value.
