@@ -9,18 +9,18 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 
 | Pro Tools guide section | Soundcraft status | Notes |
 | --- | --- | --- |
-| Global parameter, toggle, fine-adjust and multi-select shortcuts | Partial | Track, clip, edit-selection and mixer cases exist; plugin, I/O and hardware-specific cases still need their equivalent actions. |
-| Commands Keyboard Focus | Partial | Edit commands are routed in `crates/ui-egui/src/shortcuts.rs`; `-`, `\\`, `Q/W`, `Y/U/I`, `H/J/K`, `6–9` and the existing edit families now use Soundcraft actions. Some Pro Tools-specific view semantics still need reconciliation. |
-| Edit and Mix transport, editing, zoom and selection | Partial | The current command registry covers many standard actions; the audit must still reconcile every Pro Tools modifier family and context. |
-| MIDI note editing | Partial | Piano-roll note, velocity, selection and trim families are mapped; MIDI controller editing and the numeric-keypad Step Input focus model are not present. |
-| Clip gain, clip effects, playlists and automation | Partial | Several engine commands exist; shortcut coverage and context ownership are incomplete. |
-| Memory locations and markers | Partial | Recall, add, rename and delete paths exist; every Pro Tools marker/navigation chord is not yet mapped. |
-| Add New Tracks, Clip List, Track List and Groups List | Partial | UI and commands exist for several operations; focus/navigation families still need mapping. |
-| Dialog-window shortcuts | Partial | Some dialogs have keyboard handling; this requires a per-dialog pass. |
+| Global parameter, toggle, fine-adjust and multi-select shortcuts | Audited | Track, clip, edit-selection and mixer equivalents are mapped; plugin, I/O and hardware-specific families are listed below where SoundCraft has no corresponding action. |
+| Commands Keyboard Focus | Audited | Edit commands are routed in `crates/ui-egui/src/shortcuts.rs`; the remaining Pro Tools-specific semantics are listed with their exact model gaps below. |
+| Edit and Mix transport, editing, zoom and selection | Audited | Standard equivalents are mapped; keypad-only and host-modifier collisions are documented below. |
+| MIDI note editing | Audited | Piano-roll note, velocity, selection and trim families are mapped; MIDI controller editing and the numeric-keypad Step Input focus model are listed as unavailable. |
+| Clip gain, clip effects, playlists and automation | Audited | Existing equivalents are mapped; preset, Elastic Audio, plugin automation and missing playlist states are listed below. |
+| Memory locations and markers | Audited | Recall, add, rename, delete and keyboard navigation are mapped; target/priority states absent from SoundCraft are listed below. |
+| Add New Tracks, Clip List, Track List and Groups List | Audited | Existing focus, selection, navigation and bulk actions are mapped; unsupported per-item Pro Tools semantics are listed below. |
+| Dialog-window shortcuts | Audited | Enter/Escape and the supported dialog navigation are mapped; dialog controls and preset matrices absent from SoundCraft are listed below. |
 | Dashboard shortcuts | Not applicable until an equivalent dashboard exists | SoundCraft opens sessions directly and has no Pro Tools Dashboard/template/project browser with the guide's tab and option state. |
 | Workspace shortcuts | Not applicable until equivalent workspace actions exist | Soundcraft does not currently expose the full Pro Tools Workspace/Soundbase browser model. |
 | Deck control and Satellite commands | Not applicable until transport/hardware support exists | These depend on external deck or satellite integrations not present in Soundcraft. |
-| Right-click shortcuts | Partial | Context menus exist in some windows, but Pro Tools' complete context-click matrix is not a single keyboard shortcut map. |
+| Right-click shortcuts | Audited | Context menus expose the supported clip and track actions; context items whose underlying Pro Tools state does not exist are listed below. |
 
 ## Current implementation checkpoints
 
