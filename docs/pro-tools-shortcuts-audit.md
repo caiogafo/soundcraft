@@ -82,7 +82,7 @@ misleading:
 | Scrub/Jog/Shuttle | Control/Start-drag, Shuttle Lock numeric chords | No equivalent transport scrub/shuttle mode or host jog state is implemented. |
 | Clip Effects | Option/Alt+6, Command/Control+Option+Control+B/X/C/S | The display exists, but no full Pro Tools Clip Effects processing/preset model exists in the SoundCraft clip model. |
 | Elastic Audio | Warp-marker add/move/delete and rendered/real-time toggle | No Elastic Audio event/warp-marker model exists. |
-| MIDI Operations and Step Input | Numeric duration keys, panel navigation | SoundCraft has a MIDI Operations window and maps Quantize/Transpose/Split Notes/Duration actions, but it lacks Pro Tools' numeric-keypad Step Input focus model. |
+| MIDI Operations and Step Input | Numeric duration keys, panel navigation | SoundCraft opens Time/Tempo/MIDI Operations and Real-Time Properties with `Alt+1–4` main-key fallbacks; it lacks Pro Tools' numeric-keypad Step Input focus model. |
 | Workspace/Browser | Workspace search, browser navigation and drag/drop modifier matrix | No Workspace/Soundbase browser model; ordinary file drag/drop is implemented separately in the Edit window. |
 | Deck/Satellite/ICON control surfaces | Deck, Satellite and hardware-specific modifier shortcuts | No external deck, satellite or ICON control-surface integration exists. |
 | Custom Keyboard Shortcuts window | Setup > Keyboard Shortcuts, conflict resolver, presets and export | SoundCraft opens a read-only command/shortcut catalogue, but has no user-editable assignment window or preset format equivalent to Pro Tools. |

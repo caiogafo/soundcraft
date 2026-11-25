@@ -254,8 +254,7 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         }
         // Pro Tools: move Keyboard Focus between Commands, Clip List and Groups List.
         // On Linux/Windows egui exposes the physical Control chord as both Ctrl and
-        // Command, so `mods_match` keeps this portable without stealing Alt+1-4,
-        // which are the Edit mode shortcuts below.
+        // Command; `mods_match` keeps this portable while F1-F4 remain the edit-mode keys.
         Key::Num1 | Key::Num2 | Key::Num3 if mods_match(Modifiers::COMMAND | Modifiers::ALT, m, mac) => {
             let focus = match key {
                 Key::Num1 => "commands",
@@ -387,16 +386,6 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         }
         Key::F1 | Key::F2 | Key::F3 | Key::F4 if plain => {
             edit_mode_key(app, key);
-            true
-        }
-        Key::Num1 | Key::Num2 | Key::Num3 | Key::Num4 if m.alt && !m.command && !m.ctrl && !m.shift => {
-            let f = match key {
-                Key::Num1 => Key::F1,
-                Key::Num2 => Key::F2,
-                Key::Num3 => Key::F3,
-                _ => Key::F4,
-            };
-            edit_mode_key(app, f);
             true
         }
         Key::Backtick if plain => {
@@ -673,7 +662,7 @@ fn zoom_key(key: Key, m: Modifiers, mac: bool) -> Option<(&'static str, serde_js
     }
 }
 
-/// F1–F4 (and Alt+1–4) choose Shuffle, Slip, Spot and Grid; F4 in Grid switches between Absolute and
+/// F1–F4 choose Shuffle, Slip, Spot and Grid; F4 in Grid switches between Absolute and
 /// Relative unless Edit/Tool Mode Keyboard Lock is on. Holding F4 with F1–F3, in either order, adds Snap to Grid.
 fn edit_mode_key(app: &mut SoundApp, pressed: Key) {
     let ctx = app.docking_context.clone();
