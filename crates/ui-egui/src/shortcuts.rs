@@ -529,6 +529,41 @@ fn begin_counter_edit(app: &mut SoundApp) {
 fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
     let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
     match key {
+        // On Windows/Linux egui reports Pro Tools' physical Start+Control pair as both
+        // `command` and `ctrl`. Resolve the multi-modifier Edit Selection family here because
+        // the command registry intentionally keeps Mac Control distinct.
+        Key::L | Key::Quote if !mac && m.command && m.ctrl && m.alt && !m.shift => {
+            // Windows' collapsed event is also Clip > Time Lock for L. A selected clip gives
+            // that command priority; an edit-only selection keeps the Selection > Move action.
+            let id = if key == Key::L && !app.engine.session().edit.selected_clips.is_empty() {
+                "clip.time_lock"
+            } else if key == Key::L {
+                "edit.move_selection_left"
+            } else {
+                "edit.move_selection_right"
+            };
+            let _ = app.run(id, json!({}));
+            true
+        }
+        Key::L | Key::Quote if !mac && m.command && m.ctrl && m.alt && m.shift => {
+            let id = if key == Key::L { "edit.halve_selection" } else { "edit.double_selection" };
+            let _ = app.run(id, json!({}));
+            true
+        }
+        Key::D if !mac && m.command && m.ctrl && m.alt && m.shift => {
+            let _ = app.run("edit.duplicate_extend", json!({}));
+            true
+        }
+        // File-boundary trims use the same collapsed Start+Control pair off macOS.
+        Key::R | Key::Y | Key::T if !mac && m.command && m.ctrl && !m.alt && !m.shift => {
+            let id = match key {
+                Key::R => "edit.trim_to_file_start",
+                Key::Y => "edit.trim_to_file_end",
+                _ => "edit.trim_to_file_boundaries",
+            };
+            let _ = app.run(id, json!({}));
+            true
+        }
         // Pro Tools uses Cmd+Ctrl+S for Save As on macOS. On Linux/Windows the
         // host folds Start/Command into Ctrl, so Ctrl+Shift+S is retained as
         // the usable fallback without stealing the normal Save command.
