@@ -67,8 +67,33 @@ pub(crate) fn send_slot(app: &mut SoundApp, ui: &mut Ui, track: &Track, slot: us
         }
         None => empty_slot(ui.painter(), r, ui.rect_contains_pointer(r), mark),
     }
+    let mac = ui.ctx().os().is_mac();
+    let mods = ui.input(|i| i.modifiers);
+    let mute_scope = (mac && mods.ctrl) || (!mac && mods.command);
+    let mut handled_modifier = false;
+    if route_resp.clicked() && mute_scope && snd.is_some() {
+        let tracks: Vec<TrackId> = if mods.alt {
+            app.engine.session().tracks.iter().map(|t| t.id).collect()
+        } else {
+            vec![id]
+        };
+        let should_mute = tracks.iter().flat_map(|track_id| {
+            app.engine.session().track(*track_id).into_iter().flat_map(move |track| track.mixer.sends.iter().skip(slot).flatten())
+        }).any(|send| !send.mute);
+        for track_id in tracks {
+            let count = app.engine.session().track(track_id).map_or(0, |track| track.mixer.sends.len());
+            for mute_slot in slot..count {
+                if app.engine.session().track(track_id).and_then(|track| track.mixer.sends.get(mute_slot)).and_then(Option::as_ref).is_some() {
+                    let _ = app.run("mix.send_level", json!({"track": track_id.0, "slot": mute_slot, "mute": should_mute}));
+                }
+            }
+        }
+        handled_modifier = true;
+    }
     let current = snd.as_ref().map(|send| (send.target.clone(), route_name(app, &send.target)));
-    send_route_menu(app, ui, &route_resp, id, slot, current);
+    if !handled_modifier {
+        send_route_menu(app, ui, &route_resp, id, slot, current);
+    }
 }
 
 /// The Send window, as in Pro Tools: one send's fader, level, pan, Mute and Pre-fader. Clicking a

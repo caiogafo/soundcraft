@@ -98,7 +98,8 @@ pub(super) fn level_icon(r: Rect) -> Rect {
     Rect::from_min_max(pos2(outer.max.x - 9.0, outer.min.y + 2.0), pos2(outer.max.x - 4.0, outer.max.y - 2.0))
 }
 
-/// Draw one insert slot. Clicking a filled slot opens its plugin window; Cmd/Ctrl-click toggles bypass.
+/// Draw one insert slot. Clicking a filled slot opens its plugin window; Control/Start-click
+/// toggles this and the following inserts, with Option/Alt applying it to every track.
 pub(crate) fn insert_slot(app: &mut SoundApp, ui: &mut Ui, track: &Track, slot: usize, r: Rect) {
     let t = Tokens::current();
     let id = track.id;
@@ -118,14 +119,29 @@ pub(crate) fn insert_slot(app: &mut SoundApp, ui: &mut Ui, track: &Track, slot: 
         }
     }
     if resp.clicked() && ins.is_some() {
-        if ui.input(|i| i.modifiers.command) {
-            let _ = app.run("mix.insert_bypass", json!({"track": id.0, "slot": slot}));
+        let mac = ui.ctx().os().is_mac();
+        let mods = ui.input(|i| i.modifiers);
+        let bypass_scope = (mac && mods.ctrl) || (!mac && mods.command);
+        if bypass_scope {
+            let tracks: Vec<u64> = if mods.alt {
+                app.engine.session().tracks.iter().map(|t| t.id.0).collect()
+            } else {
+                vec![id.0]
+            };
+            for track_id in tracks {
+                let slots = app.engine.session().track(soundcraft_model::TrackId(track_id)).map_or(0, |t| t.mixer.inserts.len());
+                for bypass_slot in slot..slots {
+                    if app.engine.session().track(soundcraft_model::TrackId(track_id)).and_then(|t| t.mixer.inserts.get(bypass_slot)).and_then(Option::as_ref).is_some() {
+                        let _ = app.run("mix.insert_bypass", json!({"track": track_id, "slot": bypass_slot}));
+                    }
+                }
+            }
         } else if !app.ui.plugin_windows.contains(&(id, slot)) {
             app.ui.plugin_windows.push((id, slot));
         }
     }
-    let cmd = if ui.ctx().os().is_mac() { "⌘" } else { "Ctrl+" };
-    let tip = format!("{name}: click to open · {cmd}click to bypass · right-click to change");
+    let cmd = if ui.ctx().os().is_mac() { "Control" } else { "Start" };
+    let tip = format!("{name}: click to open · {cmd}-click to bypass from here · Option/Alt-click for all tracks · right-click to change");
     let menu_resp = if ins.is_none() { resp.clone() } else { resp.clone().on_hover_text(tip) };
     let popup = if ins.is_none() { egui::Popup::menu(&menu_resp) } else { egui::Popup::context_menu(&menu_resp) };
     let popup = popup.close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside);
