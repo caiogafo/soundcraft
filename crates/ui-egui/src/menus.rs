@@ -59,7 +59,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, Option<&str>)] = &[
     ("window.arrange_cascade", "Cascade", "Window > Arrange > Cascade", None),
     ("window.midi_front", "MIDI Editors to Front", "Window > MIDI Editors > Bring to Front", None),
     ("window.midi_back", "MIDI Editors to Back", "Window > MIDI Editors > Send to Back", None),
-    ("window.clip_effects", "Clip Effects", "Window > Clip Effects", None),
+    ("window.clip_effects", "Clip Effects", "Window > Clip Effects", Some("Alt+6")),
     ("window.clip_effects_dock", "Clip Effects", "View > Other Displays > Lower Dock > Clip Effects", Some("Alt+6")),
     ("window.search", "Search", "Window > Pro Tools Search", Some("Ctrl+Shift+S")),
     ("window.score", "Score Editor", "Window > Score Editor", Some("Ctrl+Alt+=")),

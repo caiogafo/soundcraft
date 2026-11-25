@@ -104,7 +104,9 @@ pub fn specs() -> Vec<CommandSpec> {
         cmd!("edit.trim_end_to_insertion", "End to Insertion", ["Edit", "Trim"], Some("Alt+Shift+8"), "{tracks?, at?}", has_selection, |e, p| {
             trim_edge(e, p, false)
         }),
-        cmd!("edit.trim_to_file_boundaries", "To File Boundaries", ["Edit", "Trim"], Some("Cmd+Ctrl+T"), "{clips?} — trims to both source-file boundaries; separate File Start/File End operations are not currently exposed", has_selection, trim_to_file),
+        cmd!("edit.trim_to_file_start", "To File Start", ["Edit", "Trim"], Some("Cmd+Ctrl+R"), "{clips?} — trims the selected clips back to their source-file start", has_selection, |e, p| trim_to_file_side(e, p, true)),
+        cmd!("edit.trim_to_file_end", "To File End", ["Edit", "Trim"], Some("Cmd+Ctrl+Y"), "{clips?} — trims the selected clips forward to their source-file end", has_selection, |e, p| trim_to_file_side(e, p, false)),
+        cmd!("edit.trim_to_file_boundaries", "To File Boundaries", ["Edit", "Trim"], Some("Cmd+Ctrl+T"), "{clips?} — trims to both source-file boundaries", has_selection, trim_to_file),
         cmd!("edit.trim_to_fill_selection", "To Fill Selection", ["Edit", "Trim"], None, "{}", has_range, trim_to_fill),
         cmd!("edit.mute_clips", "Mute", ["Edit"], Some("Cmd+M"), "{clips?}", has_selection, mute_clips),
         cmd!(
@@ -744,6 +746,26 @@ fn trim_to_file(e: &mut Engine, p: &Value) -> Result<Value> {
             let new_start = c.start - off;
             c.trim_start_to(new_start.max(lo));
             c.trim_end_to((new_start + frames).min(hi));
+            n += 1;
+        }
+    }
+    Ok(json!({"trimmed": n}))
+}
+
+fn trim_to_file_side(e: &mut Engine, p: &Value, start: bool) -> Result<Value> {
+    let ids = clip_ids_param(e, p);
+    let s = e.session_mut();
+    let mut n = 0;
+    for id in ids {
+        if let Some((frames, lo, hi)) = trim_limits(s, id)
+            && let Some(c) = s.find_clip_mut(id)
+        {
+            let file_start = c.start - c.source_offset();
+            if start {
+                c.trim_start_to(file_start.max(lo));
+            } else {
+                c.trim_end_to((file_start + frames).min(hi));
+            }
             n += 1;
         }
     }
