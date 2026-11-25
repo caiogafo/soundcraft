@@ -297,15 +297,7 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             true
         }
         // Commands Keyboard Focus: single-key editing (Edit window only).
-        k if !m.command
-            && !m.alt
-            && !m.ctrl
-            && app.ui.window == MainWindow::Edit
-            && app.engine.session().edit.keyboard_focus == "commands"
-            && commands_focus(app, k, m.shift) =>
-        {
-            true
-        }
+        k if !m.command && !m.alt && !m.ctrl && app.ui.window == MainWindow::Edit && commands_focus(app, k, m.shift) => true,
         _ => match zoom_key(key, m, mac) {
             Some((id, params)) => {
                 let _ = app.run(id, params);
