@@ -60,6 +60,10 @@ pub(crate) fn memory_locations(app: &mut SoundApp, ui: &mut Ui) {
             }
             ui.end_row();
             for (index, (n, name, loc, len, kind)) in rows.iter().enumerate() {
+                if app.ui.memory_scroll_to == Some(index) {
+                    ui.scroll_to_rect(ui.min_rect(), Some(egui::Align::Center));
+                    app.ui.memory_scroll_to = None;
+                }
                 memory_location_row(app, ui, index, *n, name, loc, len, kind);
             }
         });

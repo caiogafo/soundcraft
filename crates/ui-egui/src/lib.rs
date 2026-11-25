@@ -98,6 +98,8 @@ pub struct UiState {
     pub memory_anchor: Option<usize>,
     #[serde(skip)]
     pub memory_selected: Vec<u32>,
+    #[serde(skip)]
+    pub memory_scroll_to: Option<usize>,
     pub show_transport: bool,
     pub show_memory_locations: bool,
     pub show_big_counter: bool,
@@ -188,6 +190,7 @@ impl Default for UiState {
             memory_cursor: None,
             memory_anchor: None,
             memory_selected: Vec::new(),
+            memory_scroll_to: None,
             show_transport: false,
             show_memory_locations: false,
             show_big_counter: false,

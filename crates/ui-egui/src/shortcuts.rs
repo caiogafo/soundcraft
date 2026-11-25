@@ -580,6 +580,20 @@ fn memory_locations_key(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -
         app.ui.memory_anchor = None;
         return true;
     }
+    if matches!(key, Key::Home | Key::End | Key::PageUp | Key::PageDown) && !m.command && !m.ctrl && !m.alt && !m.shift {
+        let current = app.ui.memory_cursor.unwrap_or(0);
+        let target = if key == Key::Home {
+            0
+        } else if key == Key::End {
+            numbers.len() - 1
+        } else if key == Key::PageUp {
+            current.saturating_sub(10)
+        } else {
+            (current + 10).min(numbers.len() - 1)
+        };
+        app.ui.memory_scroll_to = Some(target);
+        return true;
+    }
     let target = match key {
         Key::ArrowUp if m.alt => 0,
         Key::ArrowDown if m.alt => numbers.len() - 1,
