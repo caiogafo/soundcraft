@@ -255,6 +255,18 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("options.keyboard_lock", json!({}));
             true
         }
+        // Marker-zone selection uses Command+Option on macOS. The Windows spelling adds the
+        // physical Start key, which this host cannot distinguish from the primary modifier.
+        Key::P | Key::Semicolon if mac && m.command && m.alt && !m.ctrl => {
+            let id = match (key, m.shift) {
+                (Key::P, false) => "edit.marker_lane_move_up",
+                (Key::Semicolon, false) => "edit.marker_lane_move_down",
+                (Key::P, true) => "edit.marker_lane_extend_up",
+                _ => "edit.marker_lane_extend_down",
+            };
+            let _ = app.run(id, json!({}));
+            true
+        }
         // Pro Tools: Option/Alt+Q opens or closes MIDI Operations on Quantize.
         // SoundCraft has the equivalent operation window, so keep its selector aligned.
         Key::Q if m.alt && !m.command && !m.ctrl && !m.shift => {

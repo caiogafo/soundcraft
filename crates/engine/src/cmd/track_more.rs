@@ -117,7 +117,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "track.mute_sends_ae",
             "Sends A-E",
             ["Track", "Mute Sends"],
-            Some("Shift+L"),
+            Some("Shift+4"),
             "{tracks?, mute?: bool} (toggles when omitted)",
             has_selection,
             |e, p| mute_sends_where(e, p, 0, 5)

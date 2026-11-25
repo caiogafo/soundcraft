@@ -47,7 +47,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Zoom/Edit Tool coverage now includes `Ctrl/Cmd+E` for Zoom Toggle and the primary-modifier tool family (`1` Zoom, `2` Trim, `3` Selector, `+` Grabber, `5` Scrubber, `6` Pencil, `7` Smart Tool).
 - Clip Gain coverage now includes the line/info toggles, `Control+Shift+B/X/C`, and contextual `Cmd/Ctrl+V` paste when the Clip Gain clipboard is active.
 - Clip Gain breakpoint coverage now uses the existing gain envelope: `Control+Shift+E` on macOS and the primary `Start/Ctrl+Shift+E` chord on Windows/Linux add a point at the edit insertion while preserving the audible gain at that point.
-- Track insert/send coverage now includes the guide's selected-track toggles: `Shift+A` bypasses all inserts, `Shift+2/3` bypasses A–E/F–J, `Shift+E/C/V/D/W` bypasses EQ/Dynamics/Reverb/Delay/Modulation, `Shift+L/5` mutes sends A–E/F–J, and `Shift+Q` mutes all sends.
+- Track insert/send coverage now includes the guide's selected-track toggles: `Shift+A` bypasses all inserts, `Shift+2/3` bypasses A–E/F–J, `Shift+E/C/V/D/W` bypasses EQ/Dynamics/Reverb/Delay/Modulation, `Shift+4/5` mutes sends A–E/F–J, and `Shift+Q` mutes all sends.
 - Track monitoring coverage now makes `Alt+K` alternate record-enabled tracks between Auto Input and Input Only monitoring, instead of only forcing Input Only.
 - View coverage now maps the existing Track Transcription Lane flag to Pro Tools' `Control+Shift+U` chord on macOS; the Linux/Windows primary-modifier collision with Clip List Unused remains documented by the host-modifier limitation.
 - Edit coverage now maps Snap to Next/Previous to macOS `Option+Control+.`/`,`; the Windows `Alt+Start` form remains unavailable while the host collapses the primary Start/Control modifiers.
@@ -65,8 +65,10 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Clip List category coverage now maps `Cmd/Ctrl+Shift+1/2/3/4` to Audio/MIDI/Video/Clip Groups, `Cmd/Ctrl+Alt+K` to Auto-Created, and `Cmd/Ctrl+Shift+U` to Unused. Unused is defined by audio sources with no timeline clips in the current model.
 - `Cmd/Ctrl+Shift+A` now selects every source and clip visible under the current Clip List name/category filters.
 - Options coverage now includes `Cmd/Ctrl+Shift+J` for Video Track Online and `Cmd/Ctrl+P` for Auto-Spot Clips, backed by the existing video/offline and option-flag commands.
+- Options coverage now maps `Cmd+Alt+Tab` to the existing Tab-to-Transients flag; the Windows `Ctrl+Alt+Tab` spelling remains subject to the host's primary/Control modifier collapse.
 - Selection coverage now registers the official multi-modifier Move/Halve/Double/Duplicate-and-Extend chords against SoundCraft's existing edit-selection operations; host modifier collapse remains subject to the same platform caveat described below.
 - Selection vertical navigation now covers `Control/Start+P` and `Control/Start+;` for moving the edit selection, plus `Option/Alt+Control/Start+P/;` for removing its top or bottom track; `;` is now a first-class parsed shortcut key.
+- Paste Special coverage now maps `Option/Alt+M` to Merge MIDI and `Option/Alt+V` to Merge Markers. Marker-zone movement/extension is also mapped for macOS `Cmd+Alt+P/;` (and the Shift variants); the Windows spelling requires the unavailable physical Start+Control distinction.
 - Clip/Event coverage now includes `Cmd/Ctrl+Alt+0` for Quantize MIDI to Grid, routed through the existing MIDI quantize engine operation; `Cmd/Ctrl+0` remains Quantize Clip to Grid.
 - Clip Effects coverage now maps the existing copy/cut/clear actions to the official `Cmd+Alt+Ctrl+C/X/B` (or `Ctrl+Alt+Start+C/X/B`) family and uses contextual `Cmd/Ctrl+V` for Paste Clip Effects when that clipboard is active; preset save/recall remains unavailable.
 
