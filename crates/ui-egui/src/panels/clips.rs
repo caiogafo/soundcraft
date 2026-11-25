@@ -172,6 +172,7 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
             }
             if resp.clicked() {
                 let mods = ui.input(|i| i.modifiers);
+                let _ = app.run("options.keyboard_focus", json!({"focus": "clips"}));
                 if resp.double_clicked() && !whole && !mods.alt && !mods.ctrl && !mods.command && !mods.shift {
                     if let Some((_, clip)) = app.engine.session().find_clip(ClipId(id)) {
                         app.dialogs.open_rename_clip(clip.id, &clip.name);
