@@ -149,6 +149,17 @@ fn command_for(key: Key, mods: Modifiers, mac: bool) -> Option<&'static str> {
 fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
     let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
     match key {
+        // Pro Tools: Control+Space pauses; on Linux egui reports the physical
+        // Control chord as both `ctrl` and `command`, so check it before Record.
+        Key::Space if m.ctrl && m.command && !m.alt && !m.shift => {
+            let _ = app.run("transport.pause", json!({}));
+            true
+        }
+        // Pro Tools: Alt+Space toggles Transport Online.
+        Key::Space if m.alt && !m.command && !m.ctrl && !m.shift => {
+            let _ = app.run("options.transport_online", json!({}));
+            true
+        }
         Key::Space if !m.command && !m.alt => {
             let id = if m.shift { "transport.half_speed" } else { "transport.toggle" };
             let _ = app.run(id, json!({}));
@@ -160,6 +171,11 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         }
         Key::S if search_chord(m, mac) => {
             let _ = app.run("window.search", json!({}));
+            true
+        }
+        // Pro Tools: Cmd/Ctrl+J toggles Transport Online.
+        Key::J if mods_match(Modifiers::COMMAND, m, mac) => {
+            let _ = app.run("options.transport_online", json!({}));
             true
         }
         Key::Equals if m.command && !(mac && m.ctrl) => {
