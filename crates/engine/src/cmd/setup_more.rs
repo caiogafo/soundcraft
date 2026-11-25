@@ -28,7 +28,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "options.marker_target_follows_first_selected_track"
         ),
         option!("options.midi_thru", "MIDI Thru", "options.midi_thru"),
-        option!("options.auto_spot_clips", "Auto-Spot Clips", "options.auto_spot_clips"),
+        cmd!(noundo "options.auto_spot_clips", "Auto-Spot Clips", ["Options"], Some("Cmd+P"), "{value?: bool} (toggles when omitted)", always, |e, p| toggle_flag(e, p, "options.auto_spot_clips")),
         option!("options.keyboard_lock", "Edit/Tool Mode Keyboard Lock", "options.edit_tool_mode_keyboard_lock"),
         option!("options.calibration_mode", "Calibration Mode", "options.calibration_mode"),
         option!("options.midi_live_mode", "MIDI Live Mode", "options.midi_live_mode"),
