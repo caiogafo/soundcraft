@@ -39,7 +39,7 @@ pub mod widgets;
 
 use serde_json::{Value, json};
 use soundcraft_engine::{Engine, TransportRequest};
-use soundcraft_model::TrackId;
+use soundcraft_model::{ClipId, TrackId};
 use soundcraft_playback::record::Trouble;
 use soundcraft_playback::{OutputTrouble, Player};
 use soundcraft_time::{Range, Samples};
@@ -342,6 +342,8 @@ pub struct SoundApp {
     pub(crate) focus_mix: bool,
     /// Text currently being entered into the main counter after pressing `*`.
     pub(crate) counter_edit: Option<String>,
+    /// Clip List Alt/Option-click audition currently being held.
+    pub(crate) clip_audition: Option<ClipId>,
     /// Temporary counter value requested by Commands Focus Q/W; it does not move the edit insertion.
     pub(crate) counter_display: Option<soundcraft_time::Samples>,
     /// Scroll Into View: the track each window brings to its top (Edit) or left (Mix) when it

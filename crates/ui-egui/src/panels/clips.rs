@@ -162,11 +162,18 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
                 if whole { bold(11.0) } else { regular(11.0) },
                 t.text,
             );
-            if resp.clicked() {
+            let alt_down = ui.input(|i| i.modifiers.alt);
+            if alt_down && resp.is_pointer_button_down_on() && !whole {
+                app.start_clip_audition(ClipId(id));
+            }
+            if resp.clicked() && !alt_down {
                 select_clip_list_row(app, rows.as_ref(), row_index, id, whole, ui.input(|i| i.modifiers));
             }
         }
     });
+    if app.clip_audition.is_some() && !ui.input(|i| i.pointer.primary_down()) {
+        app.stop_clip_audition();
+    }
 }
 
 /// Apply the Clip List's ordinary multi-selection modifiers without changing the timeline range.

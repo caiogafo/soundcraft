@@ -67,6 +67,7 @@ impl SoundApp {
             preferences: preferences::PreferencesState::default(),
             focus_mix: false,
             counter_edit: None,
+            clip_audition: None,
             counter_display: None,
             edit_scroll_into_view: None,
             mix_scroll_into_view: None,
@@ -199,6 +200,9 @@ impl SoundApp {
         self.watch_input();
         // Stop the old playback before sending a replacement session to the audio thread.
         self.handle_transport(dt);
+        if self.clip_audition.is_some() && !self.engine.transport.playing {
+            self.clip_audition = None;
+        }
         if self.engine.revision != self.last_rev {
             self.last_rev = self.engine.revision;
             if let Some(p) = &self.player {
