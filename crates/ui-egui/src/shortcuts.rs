@@ -344,6 +344,10 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             true
         }
         // Playlist target display and recent-playlist toggle.
+        Key::ArrowRight if m.command && m.alt && m.shift && (!mac || m.ctrl) => {
+            let _ = app.run("track.designate_target_playlist_all", json!({}));
+            true
+        }
         Key::ArrowRight if m.shift && !m.command && !m.ctrl && !m.alt => {
             let _ = app.run("track.show_target_playlist", json!({}));
             true

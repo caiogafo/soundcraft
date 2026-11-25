@@ -177,6 +177,15 @@ pub fn specs() -> Vec<CommandSpec> {
             designate_target
         ),
         cmd!(
+            "track.designate_target_playlist_all",
+            "Designate Target Playlist on All Tracks",
+            ["Track"],
+            Some("Cmd+Alt+Shift+Right"),
+            "{index?} — makes each shown playlist the target for its track",
+            has_tracks,
+            |e, p| designate_target(e, &serde_json::json!({"all_tracks": true, "index": p.get("index").cloned()}))
+        ),
+        cmd!(
             "track.show_target_playlist",
             "Show Target Playlist",
             ["Track"],
@@ -520,7 +529,11 @@ fn coalesce_vca(e: &mut Engine, p: &Value) -> Result<Value> {
 }
 
 fn designate_target(e: &mut Engine, p: &Value) -> Result<Value> {
-    let tracks = tracks_required(e, "track.designate_target_playlist", p)?;
+    let tracks = if p.get("all_tracks").and_then(Value::as_bool).unwrap_or(false) {
+        e.session().tracks.iter().filter(|t| !t.hidden).map(|t| t.id).collect()
+    } else {
+        tracks_required(e, "track.designate_target_playlist", p)?
+    };
     let idx = p.get("index").and_then(Value::as_u64);
     let s = e.session_mut();
     let mut out = Vec::new();
