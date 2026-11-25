@@ -37,3 +37,20 @@ The compatibility pass is complete only when every shortcut in the reference gui
 
 1. mapped to a verified Soundcraft action; or
 2. listed here with the exact missing Soundcraft capability that prevents an equivalent implementation.
+
+## Known non-equivalents from the guide
+
+These are not omitted accidentally; the corresponding Soundcraft capability is absent or
+currently exposed only as a disabled preference, so assigning the Pro Tools key would be
+misleading:
+
+| Guide area | Pro Tools shortcut family | SoundCraft blocker |
+| --- | --- | --- |
+| Numeric Keypad: Transport/Shuttle | `0–9`, keypad combinations, Shuttle Lock | The Preferences screen lists Classic/Transport/Shuttle, but the control is disabled and the input layer cannot distinguish keypad digits from the main number row. |
+| Scrub/Jog/Shuttle | Control/Start-drag, Shuttle Lock numeric chords | No equivalent transport scrub/shuttle mode or host jog state is implemented. |
+| Clip Effects | Option/Alt+6, Command/Control+Option+Control+B/X/C/S | No Clip Effects processing/preset model exists in the SoundCraft clip model. |
+| Elastic Audio | Warp-marker add/move/delete and rendered/real-time toggle | No Elastic Audio event/warp-marker model exists. |
+| MIDI Operations and Step Input | Option/Alt+Q/T/Y/P, numeric duration keys | SoundCraft has MIDI commands and an editor, but no Pro Tools MIDI Operations/Step Input window with these focus semantics. |
+| Workspace/Browser | Workspace search, browser navigation and drag/drop modifier matrix | No Workspace/Soundbase browser model; ordinary file drag/drop is implemented separately in the Edit window. |
+| Deck/Satellite/ICON control surfaces | Deck, Satellite and hardware-specific modifier shortcuts | No external deck, satellite or ICON control-surface integration exists. |
+| Custom Keyboard Shortcuts window | Setup > Keyboard Shortcuts, conflict resolver, presets and export | SoundCraft has a command registry, but no user-editable shortcut-assignment window/preset format equivalent to Pro Tools. |
