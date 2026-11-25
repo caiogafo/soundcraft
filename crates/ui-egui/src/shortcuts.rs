@@ -209,6 +209,14 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             app.ui.focus_clip_filter = true;
             true
         }
+        // File > Open Most Recent. SoundCraft keeps the same recent-session list used by its
+        // File menu; use the newest entry and preserve the normal unsaved-session prompt.
+        Key::O if mods_match(Modifiers::COMMAND | Modifiers::SHIFT, m, mac) => {
+            if let Some(path) = app.ui.recent_sessions.first().cloned() {
+                let _ = crate::dialogs::run_or_ask(app, "session.open", json!({"path": path}));
+            }
+            true
+        }
         // Pro Tools: Control+Space pauses; on Linux egui reports the physical
         // Control chord as both `ctrl` and `command`, so check it before Record.
         Key::Space if m.ctrl && m.command && !m.alt && !m.shift => {
