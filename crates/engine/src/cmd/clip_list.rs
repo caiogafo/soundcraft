@@ -113,11 +113,11 @@ fn export_definition(e: &mut Engine, p: &Value) -> Result<Value> {
         .and_then(|v| serde_json::from_value(v.clone()).ok())
         .unwrap_or_else(|| e.session().edit.selected_sources.iter().copied().collect());
     let s = e.session();
-    let mut text = String::from("kind\tid\tname\ttrack\tstart_samples\tlength_samples\tsource\tsource_offset_samples\ttime_reference_samples\n");
+    let mut text = String::from("kind\tid\tname\ttrack\tstart_samples\tlength_samples\tsource\tsource_offset_samples\ttime_reference_samples\tuser_time_reference_samples\n");
     let mut rows = 0usize;
     for id in sources {
         if let Some(src) = s.source(id) {
-            writeln!(text, "source\t{}\t{}\t\t\t\t{}\t\t{}", id.0, definition_field(&src.name), definition_field(&src.path), src.time_reference)
+            writeln!(text, "source\t{}\t{}\t\t\t\t{}\t\t{}\t", id.0, definition_field(&src.name), definition_field(&src.path), src.time_reference)
                 .map_err(|err| bad("clip.export_definition", err.to_string()))?;
             rows += 1;
         }
@@ -133,9 +133,10 @@ fn export_definition(e: &mut Engine, p: &Value) -> Result<Value> {
             ClipContent::Midi { .. } => (String::new(), 0, 0),
         };
         let track_name = s.track(track).map_or_else(String::new, |t| definition_field(&t.name));
+        let user_stamp = s.edit.values.get(&format!("clip.user_time_reference.{}", id.0)).copied().map_or_else(String::new, |value| value.round().to_string());
         writeln!(
             text,
-            "clip\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            "clip\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
             id.0,
             definition_field(&clip.name),
             track_name,
@@ -143,7 +144,8 @@ fn export_definition(e: &mut Engine, p: &Value) -> Result<Value> {
             clip.length,
             source,
             offset,
-            reference
+            reference,
+            user_stamp
         )
         .map_err(|err| bad("clip.export_definition", err.to_string()))?;
         rows += 1;
