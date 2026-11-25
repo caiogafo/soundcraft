@@ -53,7 +53,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "edit.cut_pan_automation",
             "Pan Automation",
             ["Edit", "Cut Special"],
-            Some("Cmd+Ctrl+Alt+Shift+D"),
+            None,
             "{tracks?, start?, end?} — cuts pan automation only to the clipboard",
             has_range,
             |e, p| auto_copy(e, p, Lanes::Pan, true, "edit.cut_pan_automation")
