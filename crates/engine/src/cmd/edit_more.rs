@@ -171,7 +171,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "edit.snap_next",
             "Next",
             ["Edit", "Snap to"],
-            None,
+            Some("Ctrl+Alt+."),
             "{clips?} — moves each clip so its end meets the start of the next clip",
             has_selection,
             |e, p| snap(e, p, true)
@@ -180,7 +180,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "edit.snap_previous",
             "Previous",
             ["Edit", "Snap to"],
-            None,
+            Some("Ctrl+Alt+,"),
             "{clips?} — moves each clip so its start meets the end of the previous clip",
             has_selection,
             |e, p| snap(e, p, false)
