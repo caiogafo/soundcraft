@@ -227,6 +227,12 @@ fn begin_counter_edit(app: &mut SoundApp) {
 fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
     let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
     match key {
+        // Commands Keyboard Focus: toggle the selected audio tracks between the main
+        // playlist and the alternate-playlist lanes (Pro Tools' `-`).
+        Key::Minus if plain && app.ui.window == MainWindow::Edit => {
+            toggle_playlist_view(app);
+            true
+        }
         // `=` is what a bare press of the unlabeled +/- key reports (it has no shift held, so it
         // can never be `Key::Plus`); `Key::Plus` is kept for a keyboard that does send it (e.g. a
         // numpad +). `!m.alt` leaves Alt+= to `window.event_list`'s registered shortcut.
@@ -411,6 +417,22 @@ fn commands_focus(app: &mut SoundApp, key: Key, shift: bool) -> bool {
         Key::D => "edit.fade_to_start",
         Key::G => "edit.fade_to_end",
         Key::F => "edit.fades_create",
+        Key::Q => {
+            locate_selection_edge(app, false);
+            return true;
+        }
+        Key::W => {
+            locate_selection_edge(app, true);
+            return true;
+        }
+        Key::Y | Key::U | Key::I | Key::H | Key::J | Key::K => {
+            move_selected_clip_anchor(app, key);
+            return true;
+        }
+        Key::Backslash => {
+            let _ = app.run("edit.nudge", json!({"direction": -1}));
+            return true;
+        }
         Key::Comma | Key::Period | Key::M | Key::Slash => {
             let direction = if matches!(key, Key::Period | Key::Slash) { 1 } else { -1 };
             let _ = app.run("edit.nudge", json!({"direction": direction, "next": matches!(key, Key::M | Key::Slash)}));
@@ -450,6 +472,52 @@ fn commands_focus(app: &mut SoundApp, key: Key, shift: bool) -> bool {
     };
     let _ = app.run(id, json!({}));
     true
+}
+
+/// The `-` Commands Keyboard Focus shortcut toggles the playlist lanes for selected
+/// audio tracks. MIDI/instrument tracks keep their current view because Pro Tools'
+/// alternate playlist display has no equivalent there in this model.
+fn toggle_playlist_view(app: &mut SoundApp) {
+    let s = app.engine.session();
+    let tracks: Vec<u64> = s
+        .tracks
+        .iter()
+        .filter(|t| s.edit.selected_tracks.contains(&t.id) && t.kind.has_playlist() && !t.kind.is_midi())
+        .map(|t| t.id.0)
+        .collect();
+    if tracks.is_empty() {
+        return;
+    }
+    let show = tracks.iter().any(|id| s.track(soundcraft_model::TrackId(*id)).is_some_and(|t| t.view != "playlists"));
+    let _ = app.run("track.view", json!({"tracks": tracks, "view": if show { "playlists" } else { "waveform" }}));
+}
+
+/// Display the timeline selection edge in the main counter without destroying a range
+/// selection: both edges are inside the range, so `transport.locate` preserves it.
+fn locate_selection_edge(app: &mut SoundApp, end: bool) {
+    let at = {
+        let s = app.engine.session();
+        if end { s.edit.selection.end } else { s.edit.selection.start }
+    };
+    let _ = app.run("transport.locate", json!({"at": at}));
+}
+
+/// Commands Focus clip placement shortcuts. `edit.move_clips` interprets `to` as the
+/// target start of the first selected clip; compensate for sync point/length as needed.
+fn move_selected_clip_anchor(app: &mut SoundApp, key: Key) {
+    let at = app.position();
+    let target = {
+        let s = app.engine.session();
+        let Some(id) = s.edit.selected_clips.first() else { return };
+        let Some((_, clip)) = s.find_clip(*id) else { return };
+        match key {
+            Key::Y | Key::H => at,
+            Key::U | Key::J => at.saturating_sub(clip.sync_point),
+            Key::I | Key::K => at.saturating_sub(clip.length),
+            _ => return,
+        }
+    };
+    let _ = app.run("edit.move_clips", json!({"to": target}));
 }
 
 /// Move the edit selection to the track above/below (P / ;).
