@@ -345,6 +345,18 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run(id, json!({}));
             true
         }
+        // Pro Tools pastes Clip Gain with the ordinary Cmd/Ctrl+V chord when
+        // the Clip Gain clipboard is active. Keep normal clip paste otherwise.
+        Key::V
+            if m.command
+                && !m.alt
+                && !m.shift
+                && (!m.ctrl || (!mac && !app.engine.clipboard.clip_gain.is_empty()))
+                && !app.engine.clipboard.clip_gain.is_empty() =>
+        {
+            let _ = app.run("edit.paste_clip_gain", json!({}));
+            true
+        }
         Key::Equals if m.command && !(mac && m.ctrl) => {
             let _ = app.run("window.toggle_mix_edit", json!({}));
             true
@@ -430,7 +442,7 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         // and All Automation. Resolve that context-dependent chord by the
         // selected track's displayed lane instead of letting the registry's
         // first matching command steal it.
-        Key::B | Key::X | Key::C | Key::V if m.command && m.ctrl && m.shift && !m.alt => {
+        Key::B | Key::X | Key::C | Key::V if m.command && m.ctrl && !m.shift && !m.alt => {
             let automation = app
                 .engine
                 .session()
