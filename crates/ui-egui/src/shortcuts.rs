@@ -386,6 +386,14 @@ fn begin_counter_edit(app: &mut SoundApp) {
 fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
     let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
     match key {
+        // Pro Tools: Start/Ctrl+Shift+E adds a Clip Gain breakpoint. On
+        // Windows/Linux the host exposes the Start key as the primary command
+        // modifier, while macOS keeps the physical Control chord in the
+        // command registry (where it remains distinct from Insert Silence).
+        Key::E if m.command && !m.ctrl && m.shift && !m.alt => {
+            let _ = app.run("edit.clip_gain_breakpoint", json!({}));
+            true
+        }
         // Commands Keyboard Focus: toggle the selected track display (Pro Tools' `-`).
         Key::Minus if plain && app.ui.window == MainWindow::Edit => {
             toggle_playlist_view(app);

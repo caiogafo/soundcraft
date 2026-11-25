@@ -43,7 +43,8 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Vertical-navigation conflict coverage now prioritizes MIDI Record Enable movement on `Ctrl/Cmd+Up/Down` when a MIDI/Instrument track is armed; otherwise the chord remains Track Height.
 - Target Playlist coverage now uses the existing target-playlist commands: `Shift+Right` shows the target, `Shift+Left` toggles the recent playlist, and the backslash creation/duplication chords route to the selected-track playlist model. The engine cannot distinguish every Pro Tools “all tracks” scope on keyboards where Control and Command are collapsed by the host.
 - Zoom/Edit Tool coverage now includes `Ctrl/Cmd+E` for Zoom Toggle and the primary-modifier tool family (`1` Zoom, `2` Trim, `3` Selector, `+` Grabber, `5` Scrubber, `6` Pencil, `7` Smart Tool).
-- Clip Gain coverage now includes the line/info toggles and Clear/Cut/Copy chords; adding a breakpoint at the current edit location remains unimplemented because the engine has no equivalent point-insertion command.
+- Clip Gain coverage now includes the line/info toggles and Clear/Cut/Copy chords.
+- Clip Gain breakpoint coverage now uses the existing gain envelope: `Control+Shift+E` on macOS and the primary `Start/Ctrl+Shift+E` chord on Windows/Linux add a point at the edit insertion while preserving the audible gain at that point.
 - Track insert/send coverage now includes the guide's selected-track toggles: `Shift+A` bypasses all inserts, `Shift+2/3` bypasses A–E/F–J, `Shift+E/C/V/D/W` bypasses EQ/Dynamics/Reverb/Delay/Modulation, `Shift+L/5` mutes sends A–E/F–J, and `Shift+Q` mutes all sends.
 - Event coverage now includes `Cmd/Ctrl+I` for Identify Beat and `Alt+Shift+Z` for Retrospective Record, backed by the existing Event commands.
 
@@ -64,7 +65,7 @@ misleading:
 | --- | --- | --- |
 | Numeric Keypad: Transport/Shuttle | `0–9`, keypad combinations, Shuttle Lock | The Preferences screen lists Classic/Transport/Shuttle, but the control is disabled and the input layer cannot distinguish keypad digits from the main number row. |
 | Scrub/Jog/Shuttle | Control/Start-drag, Shuttle Lock numeric chords | No equivalent transport scrub/shuttle mode or host jog state is implemented. |
-| Clip Effects | Option/Alt+6, Command/Control+Option+Control+B/X/C/S | No Clip Effects processing/preset model exists in the SoundCraft clip model. |
+| Clip Effects | Option/Alt+6, Command/Control+Option+Control+B/X/C/S | The display exists, but no full Pro Tools Clip Effects processing/preset model exists in the SoundCraft clip model. |
 | Elastic Audio | Warp-marker add/move/delete and rendered/real-time toggle | No Elastic Audio event/warp-marker model exists. |
 | MIDI Operations and Step Input | Numeric duration keys, panel navigation | SoundCraft has a MIDI Operations window and maps Quantize/Transpose/Split Notes/Duration actions, but it lacks Pro Tools' numeric-keypad Step Input focus model. |
 | Workspace/Browser | Workspace search, browser navigation and drag/drop modifier matrix | No Workspace/Soundbase browser model; ordinary file drag/drop is implemented separately in the Edit window. |

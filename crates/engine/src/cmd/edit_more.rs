@@ -68,6 +68,15 @@ pub fn specs() -> Vec<CommandSpec> {
             |e, p| auto_copy(e, p, Lanes::Plugin, true, "edit.cut_plugin_automation")
         ),
         cmd!(noundo "edit.copy_all_automation", "All Automation", ["Edit", "Copy Special"], Some("Cmd+Ctrl+C"), "{tracks?, start?, end?} — copies automation only (no clips)", has_range, |e, p| auto_copy(e, p, Lanes::All, false, "edit.copy_all_automation")),
+        cmd!(
+            "edit.clip_gain_breakpoint",
+            "Add Clip Gain Breakpoint",
+            ["Edit", "Clip Gain"],
+            Some("Ctrl+Shift+E"),
+            "{clips?, at?: position} — adds a breakpoint at the edit insertion without changing the audible gain",
+            has_selection,
+            add_clip_gain_breakpoint
+        ),
         cmd!(noundo "edit.copy_pan_automation", "Pan Automation", ["Edit", "Copy Special"], None, "{tracks?, start?, end?}", has_range, |e, p| auto_copy(e, p, Lanes::Pan, false, "edit.copy_pan_automation")),
         cmd!(noundo "edit.copy_plugin_automation", "Plugin Automation", ["Edit", "Copy Special"], None, "{tracks?, start?, end?}", has_range, |e, p| auto_copy(e, p, Lanes::Plugin, false, "edit.copy_plugin_automation")),
         cmd!(noundo "edit.copy_clip_gain", "Clip Gain", ["Edit", "Copy Special"], None, "{tracks?, start?, end?} — copies the clip gain curve under the selection", has_range, copy_clip_gain),
@@ -305,6 +314,34 @@ fn nonempty_range(e: &Engine, p: &Value, id: &str) -> Result<Range> {
 
 pub(super) fn cut_all_automation(e: &mut Engine, p: &Value) -> Result<Value> {
     auto_copy(e, p, Lanes::All, true, "edit.cut_all_automation")
+}
+
+fn add_clip_gain_breakpoint(e: &mut Engine, p: &Value) -> Result<Value> {
+    let ids = clip_ids_param(e, p);
+    let at = position_param(e, "edit.clip_gain_breakpoint", p, "at")?.unwrap_or(e.session().edit.selection.start);
+    let targets: Vec<(ClipId, Samples, f32)> = ids
+        .iter()
+        .filter_map(|id| {
+            let (_, clip) = e.session().find_clip(*id)?;
+            if !clip.is_audio() || !(clip.start..=clip.end()).contains(&at) {
+                return None;
+            }
+            let rel = at.saturating_sub(clip.start);
+            Some((*id, rel, clip_db(clip, rel)))
+        })
+        .collect();
+    if targets.is_empty() {
+        return Err(bad("edit.clip_gain_breakpoint", "select an audio clip containing the edit insertion"));
+    }
+    let s = e.session_mut();
+    for (id, rel, db) in &targets {
+        if let Some(clip) = s.find_clip_mut(*id) {
+            let mut points = clip.gain_env.clone();
+            points.push((*rel, *db));
+            set_clip_env(clip, points);
+        }
+    }
+    Ok(json!({"clips": targets.len(), "at": at}))
 }
 
 fn auto_copy(e: &mut Engine, p: &Value, which: Lanes, cut: bool, id: &str) -> Result<Value> {
