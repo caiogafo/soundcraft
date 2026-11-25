@@ -272,11 +272,17 @@ fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         // Pro Tools moves the insertion to the end with Up and to the start with Down.
         // The MIDI editor keeps ownership of plain arrows while the pointer is over its piano roll.
         Key::ArrowUp | Key::ArrowDown if plain && app.ui.window == MainWindow::Edit && !piano_roll_has_pointer(app) => {
-            let at = {
-                let sel = app.engine.session().edit.selection;
-                if key == Key::ArrowUp { sel.end } else { sel.start }
-            };
-            let _ = app.run("edit.select", json!({"start": at}));
+            let s = app.engine.session();
+            let sel = s.edit.selection;
+            if app.is_playing() {
+                let at = app.position();
+                let params =
+                    if key == Key::ArrowDown { json!({"start": at, "end": sel.end.max(at)}) } else { json!({"start": sel.start.min(at), "end": at}) };
+                let _ = app.run("edit.select", params);
+            } else {
+                let at = if key == Key::ArrowUp { sel.end } else { sel.start };
+                let _ = app.run("edit.select", json!({"start": at}));
+            }
             true
         }
         // With an edit selection (a selected clip makes one), Left/Right centre the Edit window on its start/end.
@@ -628,6 +634,20 @@ mod tests {
             assert!(super::fixed_more(&mut app, key, Modifiers::NONE, false));
             assert_eq!(app.engine.session().edit.selection, soundcraft_time::Range::point(expected));
         }
+    }
+
+    #[test]
+    fn vertical_arrows_set_selection_edges_at_the_playback_position() {
+        let mut app = app_with_selection();
+        app.engine.transport.playing = true;
+        app.engine.transport.position = 3000;
+        assert!(super::fixed_more(&mut app, Key::ArrowDown, Modifiers::NONE, false));
+        assert_eq!(app.engine.session().edit.selection, soundcraft_time::Range::new(3000, 4000));
+
+        app.run("edit.select", serde_json::json!({"start": 2000, "end": 4000})).unwrap();
+        app.engine.transport.position = 3000;
+        assert!(super::fixed_more(&mut app, Key::ArrowUp, Modifiers::NONE, false));
+        assert_eq!(app.engine.session().edit.selection, soundcraft_time::Range::new(2000, 3000));
     }
 
     #[test]
