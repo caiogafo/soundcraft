@@ -48,6 +48,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Track insert/send coverage now includes the guide's selected-track toggles: `Shift+A` bypasses all inserts, `Shift+2/3` bypasses A–E/F–J, `Shift+E/C/V/D/W` bypasses EQ/Dynamics/Reverb/Delay/Modulation, `Shift+L/5` mutes sends A–E/F–J, and `Shift+Q` mutes all sends.
 - Event coverage now includes `Cmd/Ctrl+I` for Identify Beat and `Alt+Shift+Z` for Retrospective Record, backed by the existing Event commands.
 - Group coverage now includes `Cmd/Ctrl+Shift+G` to suspend or restore all groups; `Cmd/Ctrl+G` remains New Group.
+- Clip List rename coverage now routes `Cmd/Ctrl+Shift+R` to SoundCraft's existing Auto Rename dialog for the selected clips; category/unused filters remain explicitly unimplemented.
 
 ## Completion rule
 

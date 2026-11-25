@@ -14,7 +14,7 @@ pub fn specs() -> Vec<CommandSpec> {
         "clip.auto_rename",
         "Auto Rename...",
         [],
-        None,
+        Some("Cmd+Shift+R"),
         "{clips?: [id], name?, number?: 0..999999999, zeros?: 0..9, suffix?}: sets the names that editing gives the clips it separates from these clips (default: the Clip List's selected clips): the piece after each cut is named `name`, then `zeros` zeros, then a number counting up from `number` (default 1), then `suffix`, in one number sequence for all of them. Without a name, the clips keep their names when they are separated",
         has_clip_selection,
         auto_rename
