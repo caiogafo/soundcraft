@@ -6,6 +6,7 @@ use super::{
     Align2, AutoParam, Clip, ClipContent, ClipId, Color32, Dialog, EditMode, Gesture, GridValue, NoteValue, Pos2, Range, Rect, Samples, Sense,
     Session, SoundApp, Spot, Stroke, StrokeKind, Tokens, Tool, Track, TrackId, Ui, json, ops, pos2, regular, vec2,
 };
+use crate::theme::rgb;
 
 // ---- interaction -----------------------------------------------------------------------------
 
@@ -592,10 +593,40 @@ fn clip_context_menu(app: &mut SoundApp, ui: &mut Ui, clip: Option<ClipId>) {
     if ui.button(crate::localization::text("Ungroup Clips")).clicked() {
         let _ = app.run("clip.ungroup", target.clone());
     }
+    ui.menu_button(crate::localization::text("Rating"), |ui| {
+        for rating in 0..=5u8 {
+            let clicked = if rating == 0 {
+                ui.button(crate::localization::text("None")).clicked()
+            } else {
+                ui.button(rating.to_string()).clicked()
+            };
+            if clicked {
+                let _ = app.run("clip.rating", json!({"rating": rating, "clips": [c.0]}));
+            }
+        }
+    });
+    ui.menu_button(crate::localization::text("Clip Color"), |ui| {
+        for color in soundcraft_model::TRACK_COLORS {
+            let (rect, response) = ui.allocate_exact_size(vec2(120.0, 14.0), Sense::click());
+            ui.painter().rect_filled(rect, 2.0, rgb(color));
+            if response.clicked() {
+                let _ = app.run("clip.color", json!({"clips": [c.0], "color": color}));
+            }
+        }
+        if ui.button(crate::localization::text("Use Track Color")).clicked() {
+            let _ = app.run("clip.color", json!({"clips": [c.0], "color": null}));
+        }
+    });
     if ui.button(crate::localization::text("Loop...")).clicked() {
+        if !in_selection {
+            let _ = app.run("edit.select", json!({"clips": [c.0]}));
+        }
         let _ = app.dialogs.open_for_command(&app.engine, "clip.loop");
     }
     if ui.button(crate::localization::text("Fades...")).clicked() {
+        if !in_selection {
+            let _ = app.run("edit.select", json!({"clips": [c.0]}));
+        }
         let _ = app.dialogs.open_for_command(&app.engine, "edit.fades_create");
     }
     if ui.button(crate::localization::text("Delete")).clicked() {

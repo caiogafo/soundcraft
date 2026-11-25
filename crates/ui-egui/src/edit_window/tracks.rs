@@ -270,6 +270,13 @@ pub(crate) fn track_context_menu(app: &mut SoundApp, ui: &mut Ui, id: TrackId) {
             }
         }
     });
+    ui.menu_button(crate::localization::text("Change Track Width"), |ui| {
+        for format in ["Mono", "Stereo", "LCR", "Quad", "LCRS", "5.1", "7.1", "7.1.2"] {
+            if ui.button(format).clicked() {
+                let _ = app.run("track.change_width", json!({"tracks": selection, "format": format}));
+            }
+        }
+    });
     ui.menu_button(crate::localization::text("Track Color"), |ui| {
         for (i, c) in soundcraft_model::TRACK_COLORS.iter().enumerate() {
             let (r, resp) = ui.allocate_exact_size(vec2(120.0, 14.0), Sense::click());
