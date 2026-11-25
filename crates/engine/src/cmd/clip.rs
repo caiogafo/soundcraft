@@ -114,6 +114,15 @@ pub fn specs() -> Vec<CommandSpec> {
         }),
         cmd!("clip.remove_sync_point", "Remove Sync Point", ["Clip"], None, "{clips?}", has_sync_point, remove_sync_point),
         cmd!("clip.quantize_to_grid", "Quantize to Grid", ["Clip"], Some("Cmd+0"), "{clips?}", has_selection, quantize_to_grid),
+        cmd!(
+            "clip.quantize_midi_to_grid",
+            "Quantize MIDI to Grid",
+            ["Clip"],
+            Some("Cmd+Alt+0"),
+            "{clips?} — quantizes MIDI notes in the selected clips using the current MIDI Operations grid",
+            has_selection,
+            |e, p| e.execute("event.quantize", p)
+        ),
         cmd!("clip.color", "Clip Color", [], None, "{clips?, color: [r,g,b] | null}", has_selection, |e, p| {
             let ids = clip_ids_param(e, p);
             let col = p.get("color").and_then(Value::as_array).map(|a| {
