@@ -49,9 +49,11 @@ fn mods_match(want: Modifiers, got: Modifiers, mac: bool) -> bool {
     want.command == got.command && want.shift == got.shift && want.alt == got.alt && ctrl
 }
 
-/// Cmd+Ctrl+S opens Search. Off macOS Ctrl+S is Save (Cmd+S), so Search is reached from the Window menu.
+/// Cmd+Ctrl+S on macOS and Ctrl+Shift+S on Windows/Linux open Search. Off macOS
+/// egui reports the physical Ctrl chord as both Ctrl and Command, while Ctrl+S
+/// must remain Save.
 fn search_chord(m: Modifiers, mac: bool) -> bool {
-    mac && m.command && m.ctrl
+    (mac && m.command && m.ctrl) || (!mac && m.command && m.shift && !m.alt)
 }
 
 /// Commands a host auto-repeat runs again, so holding a zoom key keeps zooming (#1377). Every other
@@ -177,6 +179,19 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         // Pro Tools: Cmd/Ctrl+J toggles Transport Online.
         Key::J if mods_match(Modifiers::COMMAND, m, mac) => {
             let _ = app.run("options.transport_online", json!({}));
+            true
+        }
+        // Pro Tools: move Keyboard Focus between Commands, Clip List and Groups List.
+        // On Linux/Windows egui exposes the physical Control chord as both Ctrl and
+        // Command, so `mods_match` keeps this portable without stealing Alt+1-4,
+        // which are the Edit mode shortcuts below.
+        Key::Num1 | Key::Num2 | Key::Num3 if mods_match(Modifiers::COMMAND | Modifiers::ALT, m, mac) => {
+            let focus = match key {
+                Key::Num1 => "commands",
+                Key::Num2 => "clips",
+                _ => "groups",
+            };
+            let _ = app.run("options.keyboard_focus", json!({"focus": focus}));
             true
         }
         // Pro Tools: Shift+T links the Track and Edit selections.

@@ -93,6 +93,38 @@ fn commands_focus_nudges_matches_the_selections_plays_and_redoes() {
 }
 
 #[test]
+fn command_clip_and_group_focus_shortcuts_match_pro_tools() {
+    for (os, cmd) in OSES {
+        let (ctx, mut app) = rig(os);
+        for (key, expected) in [
+            (Key::Num1, "commands"),
+            (Key::Num2, "clips"),
+            (Key::Num3, "groups"),
+        ] {
+            press(&ctx, &mut app, key, Modifiers { alt: true, ..cmd });
+            assert_eq!(app.engine.session().edit.keyboard_focus, expected, "{os:?}: Alt+{key:?}");
+        }
+    }
+}
+
+#[test]
+fn search_uses_the_platform_pro_tools_chord_without_stealing_save() {
+    for (os, cmd) in OSES {
+        let (ctx, mut app) = rig(os);
+        let search = if os == OperatingSystem::Mac {
+            Modifiers { ctrl: true, ..cmd }
+        } else {
+            Modifiers { shift: true, ..cmd }
+        };
+        press(&ctx, &mut app, Key::S, search);
+        assert!(app.ui.show_search, "{os:?}: search shortcut");
+        app.ui.show_search = false;
+        press(&ctx, &mut app, Key::S, cmd);
+        assert!(!app.ui.show_search, "{os:?}: save must not open search");
+    }
+}
+
+#[test]
 fn commands_focus_shift_p_and_semicolon_extend_the_selection_onto_shown_tracks() {
     for (os, _) in OSES {
         let (ctx, mut app) = rig(os);
