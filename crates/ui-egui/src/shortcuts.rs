@@ -184,6 +184,16 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("options.link_track_edit", json!({}));
             true
         }
+        // Edit Window navigation: open/close folders containing the edit selection.
+        Key::F if m.shift && !m.command && !m.ctrl && !m.alt => {
+            toggle_selection_folders(app);
+            true
+        }
+        // Show/hide the marker track lane.
+        Key::U if m.shift && !m.command && !m.ctrl && !m.alt => {
+            let _ = app.run("view.marker_track_lane", json!({}));
+            true
+        }
         Key::Equals if m.command && !(mac && m.ctrl) => {
             let _ = app.run("window.toggle_mix_edit", json!({}));
             true
@@ -413,6 +423,34 @@ fn select_adjacent_playlist(app: &mut SoundApp, next: bool) {
     for (track, index) in targets {
         let _ = app.run("track.playlist_select", json!({"track": track, "index": index}));
     }
+}
+
+/// Toggle every folder that contains at least one selected track, including nested parents.
+fn toggle_selection_folders(app: &mut SoundApp) {
+    let targets: Vec<u64> = {
+        let s = app.engine.session();
+        let selected = &s.edit.selected_tracks;
+        s.tracks
+            .iter()
+            .filter(|candidate| candidate.is_folder() && selected.iter().any(|track| track_is_in_folder(s, *track, candidate.id)))
+            .map(|track| track.id.0)
+            .collect()
+    };
+    for track in targets {
+        let _ = app.run("track.folder_toggle", json!({"track": track}));
+    }
+}
+
+fn track_is_in_folder(s: &soundcraft_model::Session, track: soundcraft_model::TrackId, folder: soundcraft_model::TrackId) -> bool {
+    let mut current = s.track(track).and_then(|t| t.folder);
+    for _ in 0..64 {
+        match current {
+            Some(parent) if parent == folder => return true,
+            Some(parent) => current = s.track(parent).and_then(|t| t.folder),
+            None => return false,
+        }
+    }
+    false
 }
 
 /// The zoom keys [`fixed`] handles, shared with [`repeating_command`]: T / R zoom the timeline in / out
