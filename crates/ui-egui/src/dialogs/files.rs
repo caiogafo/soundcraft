@@ -116,7 +116,11 @@ pub fn takes_path(id: &str) -> bool {
 
 fn path_key(id: &str) -> Option<&'static str> {
     let spec = soundcraft_engine::command_specs().iter().find(|c| c.id == id)?;
-    if spec.params.starts_with("{path?") && id != "file.print_score" {
+    // The engine accepts an omitted path to return the report text to automation callers,
+    // but the desktop menu must still ask where to save the report.
+    if id == "file.export_session_text" {
+        Some("path")
+    } else if spec.params.starts_with("{path?") && id != "file.print_score" {
         None
     } else if spec.params.starts_with("{path") {
         Some("path")

@@ -1204,7 +1204,12 @@ mod tests {
     fn file_commands_get_path_prompts_with_sensible_names() {
         let e = soundcraft_engine::demo::demo_engine();
         let mut d = Dialogs::default();
-        for (id, ext) in [("file.export_sibelius", ".musicxml"), ("file.print_score", ".svg"), ("file.export_clip_groups", ".scgrp")] {
+        for (id, ext) in [
+            ("file.export_sibelius", ".musicxml"),
+            ("file.print_score", ".svg"),
+            ("file.export_clip_groups", ".scgrp"),
+            ("file.export_session_text", ".txt"),
+        ] {
             assert!(takes_path(id), "{id}");
             assert!(d.open_for_command(&e, id), "{id}");
             match d.open.take() {
