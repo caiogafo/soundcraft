@@ -24,7 +24,7 @@ pub fn specs() -> Vec<CommandSpec> {
             let written = crate::io::save_session(e, &path)?;
             Ok(json!({"path": path, "audio_files_written": written}))
         }),
-        cmd!(noundo "session.save_as", "Save Session As...", ["File"], Some("Cmd+Shift+S"), "{path, replace?: false}", always, |e, p| {
+        cmd!(noundo "session.save_as", "Save Session As...", ["File"], Some("Cmd+Ctrl+S"), "{path, replace?: false}", always, |e, p| {
             let path = str_param(p, "path").ok_or_else(|| bad("session.save_as", "`path` required"))?.to_string();
             refuse_replacing(e, "session.save_as", &crate::io::session_file(&path), p)?;
             let written = crate::io::save_session(e, &path)?;
@@ -79,7 +79,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "file.import_video",
             "Video...",
             ["File", "Import"],
-            Some("Cmd+Ctrl+I"),
+            Some("Cmd+Alt+Shift+I"),
             "{path, at?} — adds a Video track clip for the movie's picture (H.264, ProRes, Motion JPEG) and imports its audio onto a new track",
             always,
             |e, p| {

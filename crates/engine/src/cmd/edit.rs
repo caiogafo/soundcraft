@@ -29,7 +29,7 @@ pub fn specs() -> Vec<CommandSpec> {
             p,
             "edit.clear_clip_gain"
         )),
-        cmd!("edit.cut_all_automation", "All Automation", ["Edit", "Cut Special"], Some("Cmd+Ctrl+X"), "{tracks?, start?, end?}", has_range, |e, p| {
+        cmd!("edit.cut_all_automation", "All Automation", ["Edit", "Cut Special"], Some("Alt+Shift+X"), "{tracks?, start?, end?}", has_range, |e, p| {
             super::edit_more::cut_all_automation(e, p)
         }),
         cmd!("edit.clear_all_automation", "All Automation", ["Edit", "Clear Special"], Some("Cmd+Ctrl+B"), "{}", has_range, |e, p| clear_automation(e, p, None)),

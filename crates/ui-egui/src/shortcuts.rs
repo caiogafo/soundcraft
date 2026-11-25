@@ -107,7 +107,10 @@ pub fn handle(app: &mut SoundApp, ctx: &egui::Context) {
         let clip_list_key = (matches!(key, Key::A | Key::F | Key::D | Key::U | Key::Num1 | Key::Num2 | Key::Num3 | Key::Num4)
             && mods_match(Modifiers::COMMAND | Modifiers::SHIFT, mods, mac))
             || (key == Key::K && mods_match(Modifiers::COMMAND | Modifiers::ALT, mods, mac));
-        if wants_keyboard && command_for(key, mods, mac) != Some("session.save") && !edit_arrow_navigation && !clip_list_key {
+        let save_as_key = key == Key::S
+            && !mods.alt
+            && ((mac && mods.command && mods.ctrl && !mods.shift) || (!mac && mods.command && mods.shift));
+        if wants_keyboard && command_for(key, mods, mac) != Some("session.save") && !save_as_key && !edit_arrow_navigation && !clip_list_key {
             continue;
         }
         if repeat {
@@ -457,6 +460,13 @@ fn begin_counter_edit(app: &mut SoundApp) {
 fn fixed_more(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
     let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
     match key {
+        // Pro Tools uses Cmd+Ctrl+S for Save As on macOS. On Linux/Windows the
+        // host folds Start/Command into Ctrl, so Ctrl+Shift+S is retained as
+        // the usable fallback without stealing the normal Save command.
+        Key::S if !mac && m.command && m.shift && !m.alt => {
+            let _ = app.run("session.save_as", json!({}));
+            true
+        }
         // Pro Tools reuses Cmd+Ctrl (Control+Start on Windows) for Clip Gain
         // and All Automation. Resolve that context-dependent chord by the
         // selected track's displayed lane instead of letting the registry's
