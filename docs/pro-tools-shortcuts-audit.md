@@ -37,6 +37,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Vertical-navigation conflict coverage now prioritizes MIDI Record Enable movement on `Ctrl/Cmd+Up/Down` when a MIDI/Instrument track is armed; otherwise the chord remains Track Height.
 - Target Playlist coverage now uses the existing target-playlist commands: `Shift+Right` shows the target, `Shift+Left` toggles the recent playlist, and the backslash creation/duplication chords route to the selected-track playlist model. The engine cannot distinguish every Pro Tools “all tracks” scope on keyboards where Control and Command are collapsed by the host.
 - Zoom/Edit Tool coverage now includes `Ctrl/Cmd+E` for Zoom Toggle and the primary-modifier tool family (`1` Zoom, `2` Trim, `3` Selector, `+` Grabber, `5` Scrubber, `6` Pencil, `7` Smart Tool).
+- Clip Gain coverage now includes the line/info toggles and Clear/Cut/Copy chords; adding a breakpoint at the current edit location remains unimplemented because the engine has no equivalent point-insertion command.
 
 ## Completion rule
 

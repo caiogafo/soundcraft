@@ -218,6 +218,24 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let _ = app.run("track.playlist_duplicate", json!({}));
             true
         }
+        // Clip Gain display and edit shortcuts already backed by SoundCraft commands.
+        Key::Minus if m.ctrl && m.shift && !m.alt && (!mac || !m.command) => {
+            let _ = app.run("view.clip_gain_line", json!({}));
+            true
+        }
+        Key::Equals if m.ctrl && m.shift && !m.alt && (!mac || !m.command) => {
+            let _ = app.run("view.clip_gain_info", json!({}));
+            true
+        }
+        Key::B | Key::X | Key::C if m.ctrl && m.shift && !m.alt && (!mac || !m.command) => {
+            let id = match key {
+                Key::B => "edit.clear_clip_gain",
+                Key::X => "edit.cut_clip_gain",
+                _ => "edit.copy_clip_gain",
+            };
+            let _ = app.run(id, json!({}));
+            true
+        }
         Key::Equals if m.command && !(mac && m.ctrl) => {
             let _ = app.run("window.toggle_mix_edit", json!({}));
             true
