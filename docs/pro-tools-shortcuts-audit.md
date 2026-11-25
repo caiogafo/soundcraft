@@ -65,6 +65,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - `Cmd/Ctrl+Shift+A` now selects every source and clip visible under the current Clip List name/category filters.
 - Options coverage now includes `Cmd/Ctrl+Shift+J` for Video Track Online and `Cmd/Ctrl+P` for Auto-Spot Clips, backed by the existing video/offline and option-flag commands.
 - Selection coverage now registers the official multi-modifier Move/Halve/Double/Duplicate-and-Extend chords against SoundCraft's existing edit-selection operations; host modifier collapse remains subject to the same platform caveat described below.
+- Selection vertical navigation now covers `Control/Start+P` and `Control/Start+;` for moving the edit selection, plus `Option/Alt+Control/Start+P/;` for removing its top or bottom track; `;` is now a first-class parsed shortcut key.
 - Clip/Event coverage now includes `Cmd/Ctrl+Alt+0` for Quantize MIDI to Grid, routed through the existing MIDI quantize engine operation; `Cmd/Ctrl+0` remains Quantize Clip to Grid.
 
 ## Completion rule

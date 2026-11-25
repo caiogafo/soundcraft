@@ -78,14 +78,14 @@ pub fn specs() -> Vec<CommandSpec> {
         cmd!(noundo "edit.double_selection", "Double Edit", ["Edit", "Selection"], Some("Cmd+Ctrl+Alt+Shift+'"), "{}", always, |e, _| scale_selection(e, 2.0)),
         cmd!(noundo "edit.extend_selection_up", "Extend Edit Up", ["Edit", "Selection"], Some("Ctrl+Shift+P"), "{}", has_tracks, |e, _| extend_tracks(e, -1)),
         cmd!(noundo "edit.extend_selection_down", "Extend Edit Down", ["Edit", "Selection"], Some("Ctrl+Shift+;"), "{}", has_tracks, |e, _| extend_tracks(e, 1)),
-        cmd!(noundo "edit.remove_selection_top", "Remove Edit from Top", ["Edit", "Selection"], None, "{}", has_tracks, |e, _| {
+        cmd!(noundo "edit.remove_selection_top", "Remove Edit from Top", ["Edit", "Selection"], Some("Ctrl+Alt+P"), "{}", has_tracks, |e, _| {
             let s = e.session_mut();
             if !s.edit.selected_tracks.is_empty() {
                 s.edit.selected_tracks.remove(0);
             }
             Ok(json!({}))
         }),
-        cmd!(noundo "edit.remove_selection_bottom", "Remove Edit from Bottom", ["Edit", "Selection"], None, "{}", has_tracks, |e, _| {
+        cmd!(noundo "edit.remove_selection_bottom", "Remove Edit from Bottom", ["Edit", "Selection"], Some("Ctrl+Alt+;"), "{}", has_tracks, |e, _| {
             e.session_mut().edit.selected_tracks.pop();
             Ok(json!({}))
         }),
