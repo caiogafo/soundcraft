@@ -95,25 +95,27 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
     let row_h = 17.0;
     let clips_area = with_pending_offset(egui::ScrollArea::vertical().id_salt("clips_scroll"), ui, "clips_scroll");
     clips_area.auto_shrink([false, false]).show_rows(ui, row_h, rows.len(), |ui, shown| {
+        let shown_start = shown.start;
         // Only the rows in view: what they show is read now, before any of them acts on the session.
-        let items: Vec<(u64, String, bool, [u8; 3], bool)> = {
+        let items: Vec<(usize, u64, String, bool, [u8; 3], bool)> = {
             let s = app.engine.session();
             rows.get(shown)
                 .unwrap_or_default()
                 .iter()
-                .filter_map(|row| match *row {
+                .enumerate()
+                .filter_map(|(offset, row)| match *row {
                     ClipRow::Source(i) => s.sources.get(i).map(|src| {
-                        (src.id.0, format!("{} ({}ch)", src.name, src.channels), true, [150, 150, 150], s.edit.selected_sources.contains(&src.id))
+                        (shown_start + offset, src.id.0, format!("{} ({}ch)", src.name, src.channels), true, [150, 150, 150], s.edit.selected_sources.contains(&src.id))
                     }),
                     ClipRow::Clip { track, clip } => {
                         let tr = s.tracks.get(track)?;
                         let c = tr.clips().get(clip)?;
-                        Some((c.id.0, c.name.clone(), false, c.color.unwrap_or(tr.color), s.edit.selected_clips.contains(&c.id)))
+                        Some((shown_start + offset, c.id.0, c.name.clone(), false, c.color.unwrap_or(tr.color), s.edit.selected_clips.contains(&c.id)))
                     }
                 })
                 .collect()
         };
-        for (id, name, whole, color, selected) in items {
+        for (row_index, id, name, whole, color, selected) in items {
             let (r, resp) = ui.allocate_exact_size(vec2(ui.available_width(), row_h), if whole { Sense::click_and_drag() } else { Sense::click() });
             resp.context_menu(|ui| {
                 if whole {
@@ -161,10 +163,55 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
                 t.text,
             );
             if resp.clicked() {
-                let _ = app.run("edit.select", if whole { json!({"sources": [id]}) } else { json!({"clips": [id]}) });
+                select_clip_list_row(app, rows.as_ref(), row_index, id, whole, ui.input(|i| i.modifiers));
             }
         }
     });
+}
+
+/// Apply the Clip List's ordinary multi-selection modifiers without changing the timeline range.
+fn select_clip_list_row(app: &mut SoundApp, rows: &[ClipRow], row_index: usize, id: u64, whole: bool, mods: egui::Modifiers) {
+    if !mods.command && !mods.shift {
+        let _ = app.run("edit.select", if whole { json!({"sources": [id]}) } else { json!({"clips": [id]}) });
+        return;
+    }
+    let s = app.engine.session();
+    let anchor = rows.iter().enumerate().find_map(|(index, row)| match *row {
+        ClipRow::Source(i) if s.sources.get(i).is_some_and(|source| s.edit.selected_sources.contains(&source.id)) => Some(index),
+        ClipRow::Clip { track, clip } if s.tracks.get(track).and_then(|track| track.clips().get(clip)).is_some_and(|clip| s.edit.selected_clips.contains(&clip.id)) => Some(index),
+        _ => None,
+    });
+    let range = if mods.shift { anchor.map_or_else(|| row_index..=row_index, |start| start.min(row_index)..=start.max(row_index)) } else { row_index..=row_index };
+    let mut sources = if mods.command { s.edit.selected_sources.clone() } else { Vec::new() };
+    let mut clips = if mods.command { s.edit.selected_clips.clone() } else { Vec::new() };
+    for row in rows.get(range).into_iter().flatten() {
+        match *row {
+            ClipRow::Source(i) => {
+                if let Some(source) = s.sources.get(i).map(|source| source.id)
+                    && !sources.contains(&source)
+                {
+                    sources.push(source);
+                }
+            }
+            ClipRow::Clip { track, clip } => {
+                if let Some(clip) = s.tracks.get(track).and_then(|track| track.clips().get(clip)).map(|clip| clip.id)
+                    && !clips.contains(&clip)
+                {
+                    clips.push(clip);
+                }
+            }
+        }
+    }
+    if mods.command && !mods.shift {
+        if whole {
+            sources.retain(|source| *source != SourceId(id));
+        } else {
+            clips.retain(|clip| *clip != ClipId(id));
+        }
+    }
+    let edit = &mut app.engine.session_mut().edit;
+    edit.selected_sources = sources;
+    edit.selected_clips = clips;
 }
 
 #[cfg(test)]
