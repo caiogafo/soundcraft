@@ -1,0 +1,35 @@
+# Pro Tools shortcut audit
+
+Reference: [Avid Pro Tools Shortcuts Guide 2025.10](https://resources.avid.com/SupportFiles/PT/Pro_Tools_Shortcuts_2025.10.pdf).
+
+This is the scope for the Soundcraft compatibility pass. A shortcut is only marked
+implemented when the corresponding action exists and is exercised by the Soundcraft UI.
+
+## Scope and status
+
+| Pro Tools guide section | Soundcraft status | Notes |
+| --- | --- | --- |
+| Global parameter, toggle, fine-adjust and multi-select shortcuts | Partial | Track, clip, edit-selection and mixer cases exist; plugin, I/O and hardware-specific cases still need their equivalent actions. |
+| Commands Keyboard Focus | Partial | Edit commands are routed in `crates/ui-egui/src/shortcuts.rs`; the remaining Pro Tools actions need either an existing Soundcraft command or a new command. |
+| Edit and Mix transport, editing, zoom and selection | Partial | The current command registry covers many standard actions; the audit must still reconcile every Pro Tools modifier family and context. |
+| MIDI note editing | Partial | Piano-roll arrow editing exists; the complete note, velocity, controller and step-input families are not yet reconciled. |
+| Clip gain, clip effects, playlists and automation | Partial | Several engine commands exist; shortcut coverage and context ownership are incomplete. |
+| Memory locations and markers | Partial | Recall, add, rename and delete paths exist; every Pro Tools marker/navigation chord is not yet mapped. |
+| Add New Tracks, Clip List, Track List and Groups List | Partial | UI and commands exist for several operations; focus/navigation families still need mapping. |
+| Dialog-window shortcuts | Partial | Some dialogs have keyboard handling; this requires a per-dialog pass. |
+| Workspace shortcuts | Not applicable until equivalent workspace actions exist | Soundcraft does not currently expose the full Pro Tools Workspace/Soundbase browser model. |
+| Deck control and Satellite commands | Not applicable until transport/hardware support exists | These depend on external deck or satellite integrations not present in Soundcraft. |
+| Right-click shortcuts | Partial | Context menus exist in some windows, but Pro Tools' complete context-click matrix is not a single keyboard shortcut map. |
+
+## Current implementation checkpoints
+
+- Plain Edit key families are dispatched without requiring the `a-z` toggle.
+- `B` invokes Edit > Separate when an Edit selection is available.
+- Arrow navigation, transport shortcuts, marker shortcuts and save/export shortcuts are covered by the existing UI shortcut dispatcher.
+
+## Completion rule
+
+The compatibility pass is complete only when every shortcut in the reference guide is either:
+
+1. mapped to a verified Soundcraft action; or
+2. listed here with the exact missing Soundcraft capability that prevents an equivalent implementation.
