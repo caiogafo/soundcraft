@@ -90,7 +90,7 @@ pub(super) fn drive_drag(app: &mut SoundApp, ctx: &egui::Context) {
             *last = at;
             let _ = app.engine.execute("transport.locate", &json!({"at": at}));
         }
-        Some(Gesture::Breakpoint { track, param, at: from }) => {
+        Some(Gesture::Breakpoint { track, param, at: from, lock_time, target_value }) => {
             if let Some(t) = s.track(*track)
                 && let Some((_, row)) = rows.iter().find(|(i, _)| *i == t.id.0)
                 && let Some(points) = t.lane(param).map(|l| l.points.as_slice())
@@ -99,8 +99,8 @@ pub(super) fn drive_drag(app: &mut SoundApp, ctx: &egui::Context) {
                 let lane = lane_rect(t, rect(*row), tl);
                 let after = i.checked_sub(1).and_then(|j| points.get(j)).map_or(0, |pt| pt.at.saturating_add(1));
                 let before = points.get(i + 1).map_or(Samples::MAX, |pt| pt.at.saturating_sub(1));
-                let to = snap(&s, at).clamp(after, before.max(after));
-                let value = auto_value(lane, lane_range(t, param), p.y);
+                let to = if *lock_time { *from } else { snap(&s, at).clamp(after, before.max(after)) };
+                let value = target_value.unwrap_or_else(|| auto_value(lane, lane_range(t, param), p.y));
                 if to != *from || points.get(i).is_some_and(|pt| (pt.value - value).abs() > 1e-6) {
                     let (key, pid) = (format!("breakpoint:{}", track.0), automation_id(param));
                     if to != *from {

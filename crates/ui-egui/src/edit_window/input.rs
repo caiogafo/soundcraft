@@ -260,7 +260,23 @@ fn start_gesture(app: &mut SoundApp, ui: &mut Ui, c: &LaneCtx<'_>, resp: &egui::
     if resp.drag_started()
         && let Some((param, at)) = &point_hit
     {
-        app.gesture = Some(Gesture::Breakpoint { track: track.id, param: param.clone(), at: *at });
+        let target_value = s.track(track.id).and_then(|t| t.lane(param)).and_then(|lane| {
+            let i = lane.points.iter().position(|point| point.at == *at)?;
+            let previous = i.checked_sub(1).and_then(|j| lane.points.get(j)).map(|point| point.value);
+            let next = lane.points.get(i + 1).map(|point| point.value);
+            if mods.alt {
+                if mods.command || mods.ctrl { previous } else { next }
+            } else {
+                None
+            }
+        });
+        app.gesture = Some(Gesture::Breakpoint {
+            track: track.id,
+            param: param.clone(),
+            at: *at,
+            lock_time: mods.shift,
+            target_value,
+        });
     } else if let Some(c) = gain_drag {
         // `clip.gain` refuses to run with nothing selected.
         if s.edit.selected_tracks.is_empty() && s.edit.selected_clips.is_empty() {
