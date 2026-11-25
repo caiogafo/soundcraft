@@ -1,5 +1,5 @@
 //! Clip List commands.
-use super::{CommandSpec, bad, bool_or, str_param};
+use super::{CommandSpec, bad, bool_or, position_param, str_param};
 
 use crate::{Engine, Result, cmd};
 use serde_json::{Value, json};
@@ -29,12 +29,41 @@ pub fn specs() -> Vec<CommandSpec> {
             has_list_selection,
             export_definition
         ),
+        cmd!(
+            "clip.time_stamp",
+            "Time Stamp Clips",
+            ["Clip List"],
+            Some("Cmd+Shift+M"),
+            "{clips?: [id], at?: position} — stores a User Time Stamp for the selected clips; omitted `at` uses the edit selection start",
+            has_clip_selection,
+            time_stamp
+        ),
     ]
 }
 
 fn has_list_selection(e: &Engine) -> std::result::Result<(), String> {
     let ed = &e.session().edit;
     if ed.selected_clips.is_empty() && ed.selected_sources.is_empty() { Err("select clips or files in the Clip List".into()) } else { Ok(()) }
+}
+
+fn has_clip_selection(e: &Engine) -> std::result::Result<(), String> {
+    if clip_list_clip_ids(e, &Value::Null).is_empty() { Err("select clips in the Clip List".into()) } else { Ok(()) }
+}
+
+fn clip_list_clip_ids(e: &Engine, p: &Value) -> Vec<ClipId> {
+    if let Some(arr) = p.get("clips").and_then(Value::as_array) {
+        return arr.iter().filter_map(Value::as_u64).map(ClipId).collect();
+    }
+    if let Some(id) = p.get("clip").and_then(Value::as_u64) {
+        return vec![ClipId(id)];
+    }
+    let s = e.session();
+    s.edit
+        .selected_clips
+        .iter()
+        .copied()
+        .chain(s.edit.selected_sources.iter().flat_map(|source| s.clips_using(*source).map(|clip| clip.id)))
+        .collect()
 }
 
 fn ids<'a, T: serde::Deserialize<'a>>(p: &'a Value, key: &str) -> Result<Option<T>> {
@@ -78,10 +107,7 @@ fn clear(e: &mut Engine, p: &Value) -> Result<Value> {
 fn export_definition(e: &mut Engine, p: &Value) -> Result<Value> {
     let path = str_param(p, "path").ok_or_else(|| bad("clip.export_definition", "`path` required"))?;
     super::file::refuse_replacing(e, "clip.export_definition", std::path::Path::new(path), p)?;
-    let clips: BTreeSet<ClipId> = p
-        .get("clips")
-        .and_then(|v| serde_json::from_value(v.clone()).ok())
-        .unwrap_or_else(|| e.session().edit.selected_clips.iter().copied().collect());
+    let clips: BTreeSet<ClipId> = clip_list_clip_ids(e, p).into_iter().collect();
     let sources: BTreeSet<SourceId> = p
         .get("sources")
         .and_then(|v| serde_json::from_value(v.clone()).ok())
@@ -124,6 +150,17 @@ fn export_definition(e: &mut Engine, p: &Value) -> Result<Value> {
     }
     crate::io::write_file(path, text.as_bytes())?;
     Ok(json!({"path": path, "rows": rows}))
+}
+
+fn time_stamp(e: &mut Engine, p: &Value) -> Result<Value> {
+    let ids = clip_list_clip_ids(e, p);
+    let at = position_param(e, "clip.time_stamp", p, "at")?.unwrap_or(e.session().edit.selection.start);
+    let stamp = e.session().timecode_start.saturating_add(at).max(0) as f64;
+    let s = e.session_mut();
+    for id in &ids {
+        s.edit.values.insert(format!("clip.user_time_reference.{}", id.0), stamp);
+    }
+    Ok(json!({"clips": ids.len(), "time_reference": stamp as i64}))
 }
 
 fn definition_field(value: &str) -> String {
