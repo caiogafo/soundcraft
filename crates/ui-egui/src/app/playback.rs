@@ -1,7 +1,7 @@
 use super::audio::feed_meter;
 use super::plugins::failed_plugin_status;
 use super::{Gesture, MainWindow, MeterDisplay, Range, Samples, SoundApp, TrackId, TransportRequest, json};
-use soundcraft_model::ClipId;
+use soundcraft_model::{ClipId, SourceId};
 
 /// Whether another automation-write pass is due: the transport moved at least
 /// `step` since `last` in either direction. `last == i64::MIN` marks "never
@@ -21,6 +21,14 @@ impl SoundApp {
         let (start, end) = (clip.start, clip.end());
         self.play_from_to(start, Some(end));
         self.clip_audition = Some(id);
+    }
+
+    /// Preview the first timeline placement represented by a whole source row.
+    pub(crate) fn start_source_audition(&mut self, id: SourceId) {
+        let clip = self.engine.session().clips_using(id).next().map(|clip| clip.id);
+        if let Some(clip) = clip {
+            self.start_clip_audition(clip);
+        }
     }
 
     /// Stop only an audition started by the Clip List; normal transport playback is untouched.

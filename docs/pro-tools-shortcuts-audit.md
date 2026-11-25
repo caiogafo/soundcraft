@@ -76,7 +76,7 @@ implemented when the corresponding action exists and is exercised by the Soundcr
 - Clip List export coverage now maps `Cmd/Ctrl+Shift+Y` to a real tab-separated Clip Definition export containing selected source/clip metadata, with the normal replace confirmation.
 - Clip List timestamp coverage now maps `Cmd/Ctrl+Shift+M` to a persistent per-clip User Time Stamp; when no explicit position is supplied, it uses the current edit selection start, which is the available equivalent of the guide's Current Selection action.
 - Clip List selection now honors Cmd/Ctrl-click for non-contiguous selection and Shift-click for contiguous selection across the currently filtered list.
-- Clip List Alt/Option-click-and-hold now auditions an audio clip through its placed timeline range; releasing the pointer stops only that audition. A source row without a placed timeline clip has no standalone preview engine yet.
+- Clip List Alt/Option-click-and-hold now auditions an audio clip through its placed timeline range; for a whole source row it previews the first placed occurrence. Releasing the pointer stops only that audition.
 - Options coverage now includes `Shift+J` as the closest Video Track Online toggle and `Cmd/Ctrl+Shift+J` for the same state, plus `Cmd/Ctrl+P` for Auto-Spot Clips, backed by the existing video/offline and option-flag commands.
 - The guide's `Cmd/Ctrl+P` conflict between Print Score and Auto-Spot Clips is now resolved by context: selected MIDI/Instrument content opens Print Score, while other edit contexts toggle Auto-Spot Clips.
 - Options coverage now maps `Cmd+Alt+Tab` to the existing Tab-to-Transients flag; the Windows `Ctrl+Alt+Tab` spelling remains subject to the host's primary/Control modifier collapse.

@@ -163,8 +163,12 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
                 t.text,
             );
             let alt_down = ui.input(|i| i.modifiers.alt);
-            if alt_down && resp.is_pointer_button_down_on() && !whole {
-                app.start_clip_audition(ClipId(id));
+            if alt_down && resp.is_pointer_button_down_on() {
+                if whole {
+                    app.start_source_audition(SourceId(id));
+                } else {
+                    app.start_clip_audition(ClipId(id));
+                }
             }
             if resp.clicked() && !alt_down {
                 select_clip_list_row(app, rows.as_ref(), row_index, id, whole, ui.input(|i| i.modifiers));
