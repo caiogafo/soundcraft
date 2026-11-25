@@ -188,6 +188,18 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             app.ui.show_midi_ops = !app.ui.show_midi_ops;
             true
         }
+        // Pro Tools: Option/Alt+T opens or closes MIDI Operations on Transpose.
+        Key::T if m.alt && !m.command && !m.ctrl && !m.shift => {
+            app.ops.midi_op = "transpose".into();
+            app.ui.show_midi_ops = !app.ui.show_midi_ops;
+            true
+        }
+        // Pro Tools: Option/Alt+P opens or closes MIDI Operations on Duration.
+        Key::P if m.alt && !m.command && !m.ctrl && !m.shift => {
+            app.ops.midi_op = "change duration".into();
+            app.ui.show_midi_ops = !app.ui.show_midi_ops;
+            true
+        }
         // Pro Tools: move Keyboard Focus between Commands, Clip List and Groups List.
         // On Linux/Windows egui exposes the physical Control chord as both Ctrl and
         // Command, so `mods_match` keeps this portable without stealing Alt+1-4,

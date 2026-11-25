@@ -138,6 +138,22 @@ fn alt_q_toggles_midi_operations_on_quantize() {
 }
 
 #[test]
+fn alt_t_and_alt_p_open_midi_operations_on_the_matching_panels() {
+    for (os, cmd) in OSES {
+        let (ctx, mut app) = rig(os);
+        let alt = Modifiers { alt: true, ..cmd };
+        press(&ctx, &mut app, Key::T, alt);
+        assert!(app.ui.show_midi_ops, "{os:?}: open transpose");
+        assert_eq!(app.ops.midi_op, "transpose", "{os:?}: select Transpose");
+        press(&ctx, &mut app, Key::P, alt);
+        assert!(!app.ui.show_midi_ops, "{os:?}: close from duration");
+        assert_eq!(app.ops.midi_op, "change duration", "{os:?}: select Duration");
+        press(&ctx, &mut app, Key::P, alt);
+        assert!(app.ui.show_midi_ops, "{os:?}: reopen duration");
+    }
+}
+
+#[test]
 fn commands_focus_shift_p_and_semicolon_extend_the_selection_onto_shown_tracks() {
     for (os, _) in OSES {
         let (ctx, mut app) = rig(os);

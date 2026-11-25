@@ -26,6 +26,7 @@ pub struct OpsState {
     pub quant_swing: f64,
     pub transpose: i64,
     pub velocity_add: i64,
+    pub duration_add: i64,
     pub rtp_velocity: i64,
     pub rtp_transpose: i64,
     pub rtp_duration: f64,
@@ -57,6 +58,7 @@ impl Default for OpsState {
             quant_swing: 0.0,
             transpose: 12,
             velocity_add: 10,
+            duration_add: 0,
             rtp_velocity: 0,
             rtp_transpose: 0,
             rtp_duration: 100.0,
@@ -256,7 +258,7 @@ fn midi_ops(app: &mut SoundApp, ctx: &egui::Context) {
             craft_ui::ComboBox::from_label(crate::localization::text("Operation"))
                 .selected_text(crate::localization::text(&app.ops.midi_op))
                 .show_ui(ui, |ui| {
-                    for c in ["quantize", "transpose", "change velocity", "flatten performance", "restore performance"] {
+                    for c in ["quantize", "transpose", "change velocity", "change duration", "flatten performance", "restore performance"] {
                         ui.selectable_value(&mut app.ops.midi_op, c.to_string(), crate::localization::text(c));
                     }
                 });
@@ -276,6 +278,9 @@ fn midi_ops(app: &mut SoundApp, ctx: &egui::Context) {
                 "change velocity" => {
                     ui.add(egui::Slider::new(&mut app.ops.velocity_add, -127..=127).text(crate::localization::text("Add")));
                 }
+                "change duration" => {
+                    ui.add(egui::Slider::new(&mut app.ops.duration_add, -960..=960).text(crate::localization::text("Add ticks")));
+                }
                 _ => {}
             }
             ui.label(egui::RichText::new(crate::localization::text("Applies to the selected MIDI clips (or those under the selection).")).small());
@@ -285,6 +290,7 @@ fn midi_ops(app: &mut SoundApp, ctx: &egui::Context) {
                         .run("event.quantize", json!({"grid": app.ops.quant_grid, "strength": app.ops.quant_strength, "swing": app.ops.quant_swing})),
                     "transpose" => app.run("event.transpose", json!({"semitones": app.ops.transpose})),
                     "change velocity" => app.run("event.change_velocity", json!({"add": app.ops.velocity_add})),
+                    "change duration" => app.run("event.change_duration", json!({"add": app.ops.duration_add})),
                     "flatten performance" => app.run("event.flatten_performance", json!({})),
                     _ => app.run("event.restore_performance", json!({})),
                 };
