@@ -871,7 +871,15 @@ fn run_then(app: &mut SoundApp, cmd: &str, params: Value) -> Result<Value, Strin
         open_pending_session(app);
         return Ok(Value::Null);
     }
-    app.run(cmd, params)
+    let result = app.run(cmd, params);
+    // A desktop-created session must have a location chosen before the New Session
+    // workflow is complete. The engine intentionally leaves `path` empty after
+    // replacing the document; open the normal Save As dialog immediately after the
+    // replacement, including when this command was deferred by the unsaved-changes prompt.
+    if result.is_ok() && cmd == "session.new" {
+        let _ = app.dialogs.open_for_command(&app.engine, "session.save_as");
+    }
+    result
 }
 
 /// Cancel/OK row; returns true when OK was pressed (or Enter).
