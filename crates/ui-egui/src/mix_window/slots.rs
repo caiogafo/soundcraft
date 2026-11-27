@@ -123,15 +123,18 @@ pub(crate) fn insert_slot(app: &mut SoundApp, ui: &mut Ui, track: &Track, slot: 
         let mods = ui.input(|i| i.modifiers);
         let bypass_scope = (mac && mods.ctrl) || (!mac && mods.command);
         if bypass_scope {
-            let tracks: Vec<u64> = if mods.alt {
-                app.engine.session().tracks.iter().map(|t| t.id.0).collect()
-            } else {
-                vec![id.0]
-            };
+            let tracks: Vec<u64> = if mods.alt { app.engine.session().tracks.iter().map(|t| t.id.0).collect() } else { vec![id.0] };
             for track_id in tracks {
                 let slots = app.engine.session().track(soundcraft_model::TrackId(track_id)).map_or(0, |t| t.mixer.inserts.len());
                 for bypass_slot in slot..slots {
-                    if app.engine.session().track(soundcraft_model::TrackId(track_id)).and_then(|t| t.mixer.inserts.get(bypass_slot)).and_then(Option::as_ref).is_some() {
+                    if app
+                        .engine
+                        .session()
+                        .track(soundcraft_model::TrackId(track_id))
+                        .and_then(|t| t.mixer.inserts.get(bypass_slot))
+                        .and_then(Option::as_ref)
+                        .is_some()
+                    {
                         let _ = app.run("mix.insert_bypass", json!({"track": track_id, "slot": bypass_slot}));
                     }
                 }

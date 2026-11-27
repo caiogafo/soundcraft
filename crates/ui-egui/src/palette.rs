@@ -38,7 +38,12 @@ fn entries(app: &SoundApp) -> Vec<Entry> {
         .collect();
     for (id, label, path, sc) in crate::menus::UI_COMMANDS {
         let path = path.replace(" > ", " › ");
-        v.push(Entry { action: EntryAction::Command { id: id.to_string(), path: path.clone() }, label: label.to_string(), path, shortcut: sc.unwrap_or("").to_string() });
+        v.push(Entry {
+            action: EntryAction::Command { id: id.to_string(), path: path.clone() },
+            label: label.to_string(),
+            path,
+            shortcut: sc.unwrap_or("").to_string(),
+        });
     }
     let s = app.engine.session();
     for track in &s.tracks {

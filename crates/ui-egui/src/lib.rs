@@ -290,13 +290,8 @@ pub enum Gesture {
     SendFader { track: TrackId, slot: usize },
     ClipGain { clip: soundcraft_model::ClipId, track: TrackId, pos: f32, anchor: (f32, f32), fine: bool, fader_bottom: egui::Pos2 },
     Pencil { track: TrackId, points: Vec<(Samples, f32)> },
-    Breakpoint {
-        track: TrackId,
-        param: soundcraft_model::AutoParam,
-        at: Samples,
-        lock_time: bool,
-        target_value: Option<f32>,
-    },
+    Breakpoint { track: TrackId, param: soundcraft_model::AutoParam, at: Samples, lock_time: bool, target_value: Option<f32> },
+    AutoLine { track: TrackId, param: soundcraft_model::AutoParam, range: Option<Range> },
     MidiClip { track: TrackId, from: Samples, to: Samples },
     ZoomBox { start: f32 },
 }

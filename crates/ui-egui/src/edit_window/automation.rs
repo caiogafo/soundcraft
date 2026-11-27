@@ -1,14 +1,32 @@
 use super::layout::{sample_at, x_of};
 use super::{Align2, AutoParam, Color32, Pos2, Rect, Samples, Session, Shape, Stroke, Tokens, Track, TrackKind, pos2, regular};
 
+pub(super) fn default_param_value(track: &Track, p: &AutoParam) -> f32 {
+    match p {
+        AutoParam::Volume => track.mixer.volume_db,
+        AutoParam::Pan(i) => track.mixer.pan.get(usize::from(*i)).copied().unwrap_or(0.0),
+        AutoParam::Mute => {
+            if track.mixer.mute {
+                1.0
+            } else {
+                0.0
+            }
+        }
+        AutoParam::SendLevel(slot) => track.mixer.sends.get(usize::from(*slot)).and_then(|s| s.as_ref()).map_or(-144.0, |s| s.level_db),
+        AutoParam::SendPan(slot) => track.mixer.sends.get(usize::from(*slot)).and_then(|s| s.as_ref()).map_or(0.0, |s| s.pan),
+        AutoParam::SendMute(slot) => {
+            track.mixer.sends.get(usize::from(*slot)).and_then(|s| s.as_ref()).map_or(0.0, |s| if s.mute { 1.0 } else { 0.0 })
+        }
+        AutoParam::Plugin { slot, param } => {
+            track.mixer.inserts.get(usize::from(*slot)).and_then(|i| i.as_ref()).and_then(|i| i.params.get(param)).copied().unwrap_or(0.0)
+        }
+    }
+}
+
 pub(super) fn draw_automation(painter: &egui::Painter, s: &Session, track: &Track, p: &AutoParam, tl: Rect, lane: Rect) {
     let t = Tokens::current();
     let range = lane_range(track, p);
-    let def = match p {
-        AutoParam::Volume => track.mixer.volume_db,
-        AutoParam::Pan(i) => track.mixer.pan.get(usize::from(*i)).copied().unwrap_or(0.0),
-        _ => 0.0,
-    };
+    let def = default_param_value(track, p);
     let yv = |v: f32| auto_y(lane, range, v);
     let lanes = track.lane(p);
     let pts: Vec<(f32, f32)> = match lanes {
@@ -78,6 +96,15 @@ pub(super) fn breakpoint_at(s: &Session, tl: Rect, lane: Rect, track: &Track, p:
         .filter(|(_, d)| *d <= 6.0)
         .min_by(|a, b| a.1.total_cmp(&b.1))
         .map(|(at, _)| at)
+}
+
+/// Whether `pos` is within grabbing distance of the rendered automation line.
+pub(super) fn on_automation_line(s: &Session, tl: Rect, lane: Rect, track: &Track, p: &AutoParam, pos: Pos2) -> bool {
+    let at = sample_at(s, tl, pos.x).max(0);
+    let def = default_param_value(track, p);
+    let val = track.lane(p).map(|l| l.value_at(at, def)).unwrap_or(def);
+    let y = auto_y(lane, lane_range(track, p), val);
+    (pos.y - y).abs() <= 6.0
 }
 
 pub(super) fn plugin_range(track: &Track, p: &AutoParam) -> (f32, f32) {

@@ -20,7 +20,9 @@ impl SoundApp {
             return;
         }
         let Some((_, clip)) = self.engine.session().find_clip(id) else { return };
-        if !clip.is_audio() { return }
+        if !clip.is_audio() {
+            return;
+        }
         let (start, end) = (clip.start, clip.end());
         self.play_from_to(start, Some(end));
         self.clip_audition = Some(id);
@@ -90,7 +92,13 @@ impl SoundApp {
                 if post && s.edit.pre_post_roll { s.edit.post_roll } else { 0 },
             )
         };
-        let edge = if sel.is_empty() { sel.start } else if edge_end { sel.end } else { sel.start };
+        let edge = if sel.is_empty() {
+            sel.start
+        } else if edge_end {
+            sel.end
+        } else {
+            sel.start
+        };
         let from = edge.saturating_sub(pre_roll).max(0);
         let end = (pre || post).then_some(edge.saturating_add(post_roll).max(from + 1));
         self.start_play(from, end, None);

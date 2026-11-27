@@ -1574,6 +1574,28 @@ fn alt_click_on_a_breakpoint_deletes_it() {
     }
 }
 
+#[test]
+fn smart_tool_drags_upper_half_automation_line_without_breakpoints() {
+    let mut engine = soundcraft_engine::demo::demo_engine();
+    engine.execute("edit.tool", &json!({"tool": "smart"})).unwrap();
+    let track = engine.session().tracks[0].id;
+    engine.execute("track.view", &json!({"track": track.0, "view": "volume"})).unwrap();
+    let mut h = harness_with(engine);
+    h.run_steps(2);
+    let tl = timeline(&h);
+    let s = h.state().engine.session_arc();
+    let t = s.track(track).unwrap();
+    let i = h.state().edit_layout.rows.iter().position(|(id, _)| *id == track.0).unwrap();
+    let lane = lane_rect(t, row(&h, i), tl);
+    let line_y = lane.max.y - 4.0 - ((t.mixer.volume_db - (-60.0)) / 72.0) * (lane.height() - 8.0);
+    assert!(line_y < lane.center().y, "0 dB volume line sits in the upper half of the lane");
+    let start = pos2(lane.center().x, line_y);
+    let end = start + vec2(0.0, 24.0);
+    drag(&mut h, start, end);
+    let after = h.state().engine.session().track(track).unwrap().mixer.volume_db;
+    assert!(after < -5.0, "dragging the volume line down should lower volume_db (got {after})");
+}
+
 const ALONE: ClipCut = ClipCut { left: false, right: false };
 
 #[test]

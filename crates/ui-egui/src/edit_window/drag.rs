@@ -113,6 +113,51 @@ pub(super) fn drive_drag(app: &mut SoundApp, ctx: &egui::Context) {
                 }
             }
         }
+        Some(Gesture::AutoLine { track, param, range }) => {
+            if let Some(t) = s.track(*track)
+                && let Some((_, row)) = rows.iter().find(|(i, _)| *i == t.id.0)
+            {
+                let lane = lane_rect(t, rect(*row), tl);
+                let value = auto_value(lane, lane_range(t, param), p.y);
+                let key = format!("autoline:{}", track.0);
+                if let Some(r) = range {
+                    let pid = automation_id(param);
+                    let _ = app.engine.execute_merged(
+                        "automation.write_range",
+                        &json!({"track": track.0, "param": pid, "start": r.start, "end": r.end, "value": value}),
+                        &key,
+                    );
+                } else {
+                    match param {
+                        AutoParam::Volume => {
+                            let _ = app.engine.execute_merged("mix.volume", &json!({"track": track.0, "db": value}), &key);
+                        }
+                        AutoParam::Pan(_) => {
+                            let _ = app.engine.execute_merged("mix.pan", &json!({"track": track.0, "pan": value}), &key);
+                        }
+                        AutoParam::Mute => {
+                            let _ = app.engine.execute_merged("mix.mute", &json!({"track": track.0, "value": value >= 0.5}), &key);
+                        }
+                        AutoParam::SendLevel(slot) => {
+                            let _ = app.engine.execute_merged("mix.send_level", &json!({"track": track.0, "slot": slot, "db": value}), &key);
+                        }
+                        AutoParam::SendPan(slot) => {
+                            let _ = app.engine.execute_merged("mix.send_level", &json!({"track": track.0, "slot": slot, "pan": value}), &key);
+                        }
+                        AutoParam::SendMute(slot) => {
+                            let _ = app.engine.execute_merged("mix.send_level", &json!({"track": track.0, "slot": slot, "mute": value >= 0.5}), &key);
+                        }
+                        AutoParam::Plugin { slot, param: pid } => {
+                            let _ = app.engine.execute_merged(
+                                "mix.insert_param",
+                                &json!({"track": track.0, "slot": slot, "param": pid, "value": value}),
+                                &key,
+                            );
+                        }
+                    }
+                }
+            }
+        }
         Some(Gesture::Pencil { track, points }) => {
             if let Some(t) = s.track(*track)
                 && let Some(param) = AutoParam::parse(&t.view)

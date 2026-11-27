@@ -264,7 +264,9 @@ fn midi_ops(app: &mut SoundApp, ctx: &egui::Context) {
             craft_ui::ComboBox::from_label(crate::localization::text("Operation"))
                 .selected_text(crate::localization::text(&app.ops.midi_op))
                 .show_ui(ui, |ui| {
-                    for c in ["quantize", "transpose", "change velocity", "change duration", "split notes", "flatten performance", "restore performance"] {
+                    for c in
+                        ["quantize", "transpose", "change velocity", "change duration", "split notes", "flatten performance", "restore performance"]
+                    {
                         ui.selectable_value(&mut app.ops.midi_op, c.to_string(), crate::localization::text(c));
                     }
                 });
