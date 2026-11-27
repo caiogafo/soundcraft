@@ -127,8 +127,10 @@ impl NewTracks {
                         }
                     }
                     Key::ArrowUp | Key::ArrowDown => {
-                        let index = TrackKind::ALL.iter().position(|k| k.id() == row.kind).unwrap_or(0);
-                        if let Some(next) = TrackKind::ALL.get(cycle_index(index, TrackKind::ALL.len(), forward)) {
+                        let kinds: Vec<TrackKind> =
+                            TrackKind::ALL.iter().copied().filter(|k| !matches!(k, TrackKind::Midi | TrackKind::Instrument)).collect();
+                        let index = kinds.iter().position(|k| k.id() == row.kind).unwrap_or(0);
+                        if let Some(next) = kinds.get(cycle_index(index, kinds.len(), forward)) {
                             set_new_track_kind(&mut row.kind, &mut row.name, *next);
                         }
                     }
@@ -202,7 +204,7 @@ impl NewTracks {
                         .width(widths.kind)
                         .selected_text(crate::localization::text(TrackKind::from_id(&row.kind).map_or("Audio Track", |k| k.label())))
                         .show_ui(ui, |ui| {
-                            for k in TrackKind::ALL {
+                            for k in TrackKind::ALL.iter().copied().filter(|k| !matches!(k, TrackKind::Midi | TrackKind::Instrument)) {
                                 if ui.selectable_label(row.kind == k.id(), crate::localization::text(k.label())).clicked() {
                                     set_new_track_kind(&mut row.kind, &mut row.name, k);
                                 }

@@ -310,9 +310,6 @@ pub fn menu_bar(app: &mut SoundApp, ui: &mut egui::Ui) {
                                     if c.path == "File > Open" {
                                         crate::recent::menu(app, ui);
                                     }
-                                    if c.path == "Track > New..." {
-                                        instrument_menu(app, ui);
-                                    }
                                 }
                                 if root.path == "AudioSuite" {
                                     ui.separator();
@@ -383,7 +380,22 @@ fn instrument_track(s: &soundcraft_model::Session) -> Option<soundcraft_model::T
     s.tracks.iter().find(|t| t.kind == soundcraft_model::TrackKind::Instrument && s.edit.selected_tracks.contains(&t.id)).map(|t| t.id)
 }
 
+fn is_music_menu(path: &str) -> bool {
+    path.contains("MIDI")
+        || path.contains("Score")
+        || path.contains("Beat Detective")
+        || path.contains("Instrument")
+        || path.contains("Time Signature")
+        || path.contains("Click")
+        || path.contains("Countoff")
+        || path.contains("Sketch")
+        || matches!(path, "Event > Tempo" | "Event > Tempo Operations" | "Event > Identify Beat...")
+}
+
 fn menu_node(app: &mut SoundApp, ui: &mut egui::Ui, n: &MenuNode, extra: &[(&str, &str)]) {
+    if is_music_menu(&n.path) {
+        return;
+    }
     if !n.children.is_empty() {
         ui.menu_button(crate::localization::text(&n.label).to_string(), |ui| {
             scrolling(ui, |ui| {

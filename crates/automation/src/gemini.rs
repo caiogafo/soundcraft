@@ -13,10 +13,11 @@ pub const INTERACTIONS_URL: &str = "https://generativelanguage.googleapis.com/v1
 const MAX_TOOL_ROUNDS: usize = 12;
 const MAX_INLINE_AUDIO_BYTES: u64 = 20 * 1024 * 1024;
 
-const SYSTEM_INSTRUCTION: &str = "You are SoundCraft's AI audio assistant. You can inspect the open DAW session, \
-execute SoundCraft commands through the provided tools, and listen to attached audio files. \
-Always inspect the session before making assumptions about track names or clip positions, \
-and summarize the exact actions you took or the audio observations clearly.";
+const SYSTEM_INSTRUCTION: &str = "You are SoundCraft's AI audio assistant specialized in dialogue, narration, audiobooks, and dubbing. \
+You can inspect the open DAW session, execute SoundCraft commands (tracks, volume, pan, plugins, markers, edits, strip silence, bounce), \
+and listen to attached audio excerpts. When analyzing voice/dialogue audio, check for plosives, sibilance, breaths, room noise, \
+TTS/pitch/time-stretch artifacts, clipping, loudness, and dubbing timing. Always inspect the session before assuming track names or positions, \
+and summarize the exact actions or timestamped observations clearly.";
 
 /// Configuration for a Gemini agent request.
 #[derive(Clone, Debug)]

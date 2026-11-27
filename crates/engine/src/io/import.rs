@@ -18,12 +18,15 @@ pub(crate) fn parse_meminfo_available_kb(text: &str) -> Option<u64> {
     None
 }
 
-/// Minimum `MemAvailable` (2 GiB) kept free on Linux so the UI, GPU and OS never thrash swap.
+/// Minimum `MemAvailable` (1 GiB) kept free on Linux so the UI, GPU and OS never thrash swap.
 #[cfg(target_os = "linux")]
-const LINUX_MEM_RESERVE_KB: u64 = 2 * 1024 * 1024;
+const LINUX_MEM_RESERVE_KB: u64 = 1024 * 1024;
+/// Always allow at least 16 MiB of decoded `f32` audio so small clips and tests never fail.
+#[cfg(target_os = "linux")]
+const MIN_SAMPLE_BUDGET: usize = 4 << 20;
 
 /// Maximum `f32` samples we should allow a new audio source to allocate without risking a Linux
-/// OOM kill or swap thrashing: half of `(MemAvailable - 2 GiB)`, capped at [`MAX_IMPORT_SAMPLES`].
+/// OOM kill: 75% of `(MemAvailable - 1 GiB)`, capped at [`MAX_IMPORT_SAMPLES`].
 /// On non-Linux targets or if `/proc/meminfo` cannot be read, returns [`MAX_IMPORT_SAMPLES`].
 pub(crate) fn available_sample_budget() -> usize {
     #[cfg(target_os = "linux")]
@@ -31,9 +34,9 @@ pub(crate) fn available_sample_budget() -> usize {
         && let Some(kb) = parse_meminfo_available_kb(&text)
     {
         let usable_kb = kb.saturating_sub(LINUX_MEM_RESERVE_KB);
-        // usable_kb * 1024 bytes / 2 (50% headroom) / 4 bytes per f32 = usable_kb * 128 samples.
-        let samples = usable_kb.saturating_mul(128);
-        return usize::try_from(samples).unwrap_or(MAX_IMPORT_SAMPLES).min(MAX_IMPORT_SAMPLES);
+        // usable_kb * 1024 bytes * 0.75 / 4 bytes per f32 = usable_kb * 192 samples.
+        let samples = usable_kb.saturating_mul(192);
+        return usize::try_from(samples).unwrap_or(MAX_IMPORT_SAMPLES).clamp(MIN_SAMPLE_BUDGET, MAX_IMPORT_SAMPLES);
     }
     MAX_IMPORT_SAMPLES
 }

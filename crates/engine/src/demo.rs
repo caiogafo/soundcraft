@@ -315,7 +315,7 @@ pub fn demo_session() -> Session {
     s.edit.selected_tracks = vec![tk];
     s.edit.selection = soundcraft_time::Range::point((4 * bar) as i64);
     s.edit.zoom.samples_per_px = (total as f64 / 1400.0).max(1.0);
-    s.edit.main_counter = soundcraft_time::TimeFormat::BarsBeats;
+    s.edit.main_counter = soundcraft_time::TimeFormat::MinSecs;
     s
 }
 
