@@ -86,6 +86,15 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
         ui.ctx().memory_mut(|m| m.request_focus(fkey));
         app.ui.focus_clip_filter = false;
     }
+    let offline_count = {
+        let s = app.engine.session();
+        s.sources.iter().filter(|src| !s.pool.contains(src.id)).count()
+    };
+    if offline_count > 0
+        && ui.button(format!("Load Offline ({offline_count})")).on_hover_text("Load offline audio clips that fit in free RAM").clicked()
+    {
+        let _ = app.run("session.load_offline", json!({}));
+    }
     let filter = app.ui.clip_filter.clone();
     let kind = app.ui.clip_filter_kind.clone();
     let needle = filter.to_lowercase();
@@ -113,10 +122,11 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
                 .enumerate()
                 .filter_map(|(offset, row)| match *row {
                     ClipRow::Source(i) => s.sources.get(i).map(|src| {
+                        let offline = if s.pool.contains(src.id) { "" } else { " [offline]" };
                         (
                             shown_start + offset,
                             src.id.0,
-                            format!("{} ({}ch)", src.name, src.channels),
+                            format!("{} ({}ch){offline}", src.name, src.channels),
                             true,
                             [150, 150, 150],
                             s.edit.selected_sources.contains(&src.id),
@@ -141,6 +151,10 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
             let (r, resp) = ui.allocate_exact_size(vec2(ui.available_width(), row_h), if whole { Sense::click_and_drag() } else { Sense::click() });
             resp.context_menu(|ui| {
                 if whole {
+                    if !app.engine.session().pool.contains(SourceId(id)) && ui.button("Load Offline Clip").clicked() {
+                        let _ = app.run("session.load_offline", json!({"source": id}));
+                        ui.close();
+                    }
                     if ui.button(crate::localization::text("Place on New Track")).clicked() {
                         let _ = app.run("clip.place_source", json!({"source": id}));
                         ui.close();

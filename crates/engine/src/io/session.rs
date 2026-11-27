@@ -77,6 +77,55 @@ pub(crate) fn open_session_linked(e: &mut Engine, path: &Path, links: &Path) -> 
     Ok(missing)
 }
 
+/// Load offline audio sources on demand (all offline sources when `only` is `None`, or a single
+/// source by id), respecting the current free-memory budget. Returns `(loaded_count, errors)`.
+pub fn load_offline_sources(e: &mut Engine, only: Option<soundcraft_model::SourceId>) -> Result<(usize, Vec<String>)> {
+    let links = e
+        .path
+        .as_deref()
+        .map(PathBuf::from)
+        .or_else(|| e.session().folder.as_ref().map(|d| d.join("session.scraft")))
+        .unwrap_or_else(|| PathBuf::from("session.scraft"));
+    let rate = e.session().sample_rate.hz();
+    let targets: Vec<(soundcraft_model::SourceId, String)> = e
+        .session()
+        .sources
+        .iter()
+        .filter(|src| !e.session().pool.contains(src.id) && only.is_none_or(|id| id == src.id))
+        .map(|src| (src.id, src.path.clone()))
+        .collect();
+    let mut loaded = 0usize;
+    let mut errors = Vec::new();
+    let mut files = DecodedFiles::new();
+    let mut remaining_budget = available_sample_budget().min(MAX_IMPORT_SAMPLES);
+    for (id, raw_path) in targets {
+        let decoded = stored_path(&raw_path, &links).map_err(|why| format!("{raw_path}: {why}")).and_then(|p| {
+            let key = file_key(&p);
+            let already_cached = files.contains_key(&key);
+            let audio = decode_file_with_budget(&mut files, &p, rate, remaining_budget)?;
+            if !already_cached {
+                let used = audio.frames().saturating_mul(usize::from(audio.buffer.num_channels()));
+                remaining_budget = remaining_budget.saturating_sub(used);
+            }
+            Ok(audio)
+        });
+        match decoded {
+            Ok(audio) => {
+                e.session_mut().pool.insert(id, audio);
+                loaded += 1;
+            }
+            Err(err) => errors.push(err),
+        }
+    }
+    if loaded > 0 {
+        e.revision = e.revision.saturating_add(1);
+    }
+    for err in &errors {
+        e.message(format!("missing media: {err}"));
+    }
+    Ok((loaded, errors))
+}
+
 /// Decode one source's audio file at the session rate.
 pub(super) fn decode_source(bytes: &[u8], ext: Option<&str>, rate: u32) -> std::result::Result<Arc<SourceAudio>, String> {
     let budget = available_sample_budget().min(MAX_IMPORT_SAMPLES);

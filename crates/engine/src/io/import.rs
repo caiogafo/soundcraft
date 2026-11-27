@@ -19,17 +19,17 @@ pub(crate) fn parse_meminfo_available_kb(text: &str) -> Option<u64> {
 }
 
 /// Minimum `MemAvailable` (1 GiB) kept free on Linux so the UI, GPU and OS never thrash swap.
-#[cfg(target_os = "linux")]
+#[cfg(all(target_os = "linux", not(test)))]
 const LINUX_MEM_RESERVE_KB: u64 = 1024 * 1024;
 /// Always allow at least 16 MiB of decoded `f32` audio so small clips and tests never fail.
-#[cfg(target_os = "linux")]
+#[cfg(all(target_os = "linux", not(test)))]
 const MIN_SAMPLE_BUDGET: usize = 4 << 20;
 
 /// Maximum `f32` samples we should allow a new audio source to allocate without risking a Linux
 /// OOM kill: 75% of `(MemAvailable - 1 GiB)`, capped at [`MAX_IMPORT_SAMPLES`].
-/// On non-Linux targets or if `/proc/meminfo` cannot be read, returns [`MAX_IMPORT_SAMPLES`].
+/// On non-Linux targets, tests, or if `/proc/meminfo` cannot be read, returns [`MAX_IMPORT_SAMPLES`].
 pub(crate) fn available_sample_budget() -> usize {
-    #[cfg(target_os = "linux")]
+    #[cfg(all(target_os = "linux", not(test)))]
     if let Ok(text) = std::fs::read_to_string("/proc/meminfo")
         && let Some(kb) = parse_meminfo_available_kb(&text)
     {

@@ -59,6 +59,11 @@ pub fn specs() -> Vec<CommandSpec> {
             crate::io::open_session(e, &path)?;
             Ok(json!({}))
         }),
+        cmd!(noundo "session.load_offline", "Load Offline Media", ["File"], None, "{source?: source id}", always, |e, p| {
+            let only = p.get("source").and_then(Value::as_u64).map(soundcraft_model::SourceId);
+            let (loaded, errors) = crate::io::load_offline_sources(e, only)?;
+            Ok(json!({"loaded": loaded, "missing": errors}))
+        }),
         cmd!(
             "file.import_audio",
             "Audio...",
