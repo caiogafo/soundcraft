@@ -46,6 +46,22 @@ pub fn read_file(path: impl AsRef<Path>) -> Result<Vec<u8>> {
     read_file_within(path.as_ref(), false)
 }
 
+/// Opens a regular file for reading, respecting the automation read root and without blocking on
+/// FIFOs/named pipes (`O_NONBLOCK` on Unix). Errors name the file.
+pub(crate) fn open_file_read(path: &Path) -> Result<std::fs::File> {
+    crate::file_access::check_read(path).map_err(EngineError::Io)?;
+    let err = |err: std::io::Error| EngineError::Io(format!("{}: {err}", path.display()));
+    let mut options = std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    std::os::unix::fs::OpenOptionsExt::custom_flags(&mut options, O_NONBLOCK);
+    let file = options.open(path).map_err(err)?;
+    if !file.metadata().map_err(err)?.is_file() {
+        return Err(EngineError::Io(format!("{}: not a regular file", path.display())));
+    }
+    Ok(file)
+}
+
 /// [`read_file`]; a `session` file is refused ([`session_size`]) past [`session_limit`].
 fn read_file_within(path: &Path, session: bool) -> Result<Vec<u8>> {
     use std::io::Read as _;

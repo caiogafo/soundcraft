@@ -96,11 +96,7 @@ fn commands_focus_nudges_matches_the_selections_plays_and_redoes() {
 fn command_clip_and_group_focus_shortcuts_match_pro_tools() {
     for (os, cmd) in OSES {
         let (ctx, mut app) = rig(os);
-        for (key, expected) in [
-            (Key::Num1, "commands"),
-            (Key::Num2, "clips"),
-            (Key::Num3, "groups"),
-        ] {
+        for (key, expected) in [(Key::Num1, "commands"), (Key::Num2, "clips"), (Key::Num3, "groups")] {
             press(&ctx, &mut app, key, Modifiers { alt: true, ..cmd });
             assert_eq!(app.engine.session().edit.keyboard_focus, expected, "{os:?}: Alt+{key:?}");
         }
@@ -202,11 +198,11 @@ fn primary_p_resolves_print_score_and_auto_spot_by_edit_content() {
 #[test]
 fn keyboard_shortcuts_window_keeps_export_clips_primary_chord_free() {
     let (ctx, mut app) = rig(OperatingSystem::Mac);
-    press(&ctx, &mut app, Key::K, Modifiers { ctrl: true, shift: true });
+    press(&ctx, &mut app, Key::K, Modifiers { ctrl: true, shift: true, ..Modifiers::NONE });
     assert!(app.ui.show_shortcuts, "Mac Control+Shift+K opens Keyboard Shortcuts");
 
     let (ctx, mut app) = rig(OperatingSystem::Nix);
-    press(&ctx, &mut app, Key::K, Modifiers { command: true, shift: true });
+    press(&ctx, &mut app, Key::K, Modifiers { command: true, shift: true, ..Modifiers::NONE });
     assert!(app.dialogs.open_name().is_some_and(|name| name == "path"), "primary Ctrl+Shift+K remains Export Clips");
 }
 
@@ -216,7 +212,7 @@ fn mac_clip_list_batch_rename_uses_the_physical_control_chord() {
     app.run("edit.select", json!({"tracks": ["Kick"]})).unwrap();
     let clip = app.engine.session().track_by_name("Kick").unwrap().clips()[0].id;
     app.run("edit.select", json!({"clips": [clip.0]})).unwrap();
-    press(&ctx, &mut app, Key::R, Modifiers { ctrl: true, shift: true });
+    press(&ctx, &mut app, Key::R, Modifiers { ctrl: true, shift: true, ..Modifiers::NONE });
     assert_eq!(app.dialogs.open_name(), Some("auto_rename"));
 }
 
@@ -488,5 +484,42 @@ fn cmd_6_and_7_choose_the_pencil_and_the_smart_tool() {
         }
         press(&ctx, &mut app, Key::Num7, cmd);
         assert_eq!(app.engine.session().edit.tool.id(), "smart", "{os:?}");
+    }
+}
+
+fn press_physical(ctx: &egui::Context, app: &mut SoundApp, key: Key, physical: Key, modifiers: Modifiers) {
+    let presses = [true, false].map(|pressed| Event::Key { key, physical_key: Some(physical), pressed, repeat: false, modifiers });
+    let events: Vec<Event> = [Event::ModifiersChanged(modifiers)].into_iter().chain(presses).collect();
+    ctx.run_ui(RawInput { events, ..Default::default() }, |ui| shortcuts::handle(app, ui.ctx())).textures_delta.clear();
+}
+
+#[test]
+fn numpad_keys_are_separated_from_main_number_row() {
+    for (os, cmd) in OSES {
+        let (ctx, mut app) = rig(os);
+        // Numpad 0 toggles transport; main-row 0 sets timeline to selection.
+        app.engine.transport_requests.clear();
+        press_physical(&ctx, &mut app, Key::Num0, Key::Numpad0, Modifiers::NONE);
+        assert_eq!(app.engine.transport_requests, vec![TransportRequest::TogglePlay], "{os:?}: Numpad0 toggles transport");
+
+        // Numpad 4/7 toggle Loop Playback / Click, without triggering main-row zoom presets.
+        let loop_before = app.engine.session().edit.loop_playback;
+        press_physical(&ctx, &mut app, Key::Num4, Key::Numpad4, Modifiers::NONE);
+        assert_ne!(app.engine.session().edit.loop_playback, loop_before, "{os:?}: Numpad4 toggles loop playback");
+
+        let click_before = app.engine.session().edit.click;
+        press_physical(&ctx, &mut app, Key::Num7, Key::Numpad7, Modifiers::NONE);
+        assert_ne!(app.engine.session().edit.click, click_before, "{os:?}: Numpad7 toggles click");
+
+        // Cmd+Numpad3 opens the Transport window instead of switching to the Selector tool (Cmd+3).
+        app.run("edit.tool", json!({"tool": "grabber"})).unwrap();
+        let transport_was_open = app.ui.show_transport;
+        press_physical(&ctx, &mut app, Key::Num3, Key::Numpad3, cmd);
+        assert_ne!(app.ui.show_transport, transport_was_open, "{os:?}: Cmd+Numpad3 toggles Transport window");
+        assert_eq!(app.engine.session().edit.tool.id(), "grabber", "{os:?}: Cmd+Numpad3 keeps current edit tool");
+
+        // Main-row Cmd+3 still selects the Selector tool.
+        press_physical(&ctx, &mut app, Key::Num3, Key::Num3, cmd);
+        assert_eq!(app.engine.session().edit.tool.id(), "selector", "{os:?}: Cmd+Num3 selects Selector tool");
     }
 }

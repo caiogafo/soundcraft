@@ -82,19 +82,21 @@ pub fn handle(app: &mut SoundApp, ctx: &egui::Context) {
     // an event's `repeat` flag from the physical key state, which says nothing about whether that
     // particular event was injected.
     let scripted = app.scripted_key_press_indices();
-    let events: Vec<(Key, Modifiers, bool)> = ctx.input(|i| {
+    let events: Vec<(Key, Option<Key>, Modifiers, bool)> = ctx.input(|i| {
         i.events
             .iter()
             .enumerate()
             .filter_map(|(index, e)| match e {
-                egui::Event::Key { key, pressed: true, repeat, modifiers, .. } => Some((*key, *modifiers, *repeat && !scripted.contains(&index))),
+                egui::Event::Key { key, physical_key, pressed: true, repeat, modifiers } => {
+                    Some((*key, *physical_key, *modifiers, *repeat && !scripted.contains(&index)))
+                }
                 _ => None,
             })
             .collect()
     });
     // Cmd and Ctrl are separate keys only on macOS (asked at runtime so the web build in a Mac browser agrees).
     let mac = ctx.os() == egui::os::OperatingSystem::Mac;
-    for (key, mods, repeat) in events {
+    for (key, physical_key, mods, repeat) in events {
         let edit_arrow_navigation = app.counter_edit.is_none()
             && app.ui.window == MainWindow::Edit
             && matches!(key, Key::ArrowLeft | Key::ArrowRight | Key::ArrowUp | Key::ArrowDown)
@@ -108,10 +110,14 @@ pub fn handle(app: &mut SoundApp, ctx: &egui::Context) {
         let clip_list_key = (matches!(key, Key::A | Key::F | Key::D | Key::U | Key::Num1 | Key::Num2 | Key::Num3 | Key::Num4)
             && mods_match(Modifiers::COMMAND | Modifiers::SHIFT, mods, mac))
             || (key == Key::K && mods_match(Modifiers::COMMAND | Modifiers::ALT, mods, mac));
-        let save_as_key = key == Key::S
-            && !mods.alt
-            && ((mac && mods.command && mods.ctrl && !mods.shift) || (!mac && mods.command && mods.shift));
+        let save_as_key = key == Key::S && !mods.alt && ((mac && mods.command && mods.ctrl && !mods.shift) || (!mac && mods.command && mods.shift));
         if wants_keyboard && command_for(key, mods, mac) != Some("session.save") && !save_as_key && !edit_arrow_navigation && !clip_list_key {
+            continue;
+        }
+        if let Some(numpad_key) = physical_key.filter(|k| is_numpad_key(*k)) {
+            if !repeat || matches!(numpad_key, Key::Numpad1 | Key::Numpad2 | Key::NumpadAdd | Key::NumpadSubtract) {
+                let _ = numpad_shortcut(app, numpad_key, mods, mac);
+            }
             continue;
         }
         if repeat {
@@ -171,7 +177,13 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         // by SoundCraft's clip/source model, so these are real filters rather
         // than aliases to an unrelated action.
         Key::Num1 | Key::Num2 | Key::Num3 | Key::Num4 if mods_match(Modifiers::COMMAND | Modifiers::SHIFT, m, mac) => {
-            app.ui.clip_filter_kind = match key { Key::Num1 => "audio", Key::Num2 => "midi", Key::Num3 => "video", _ => "groups" }.into();
+            app.ui.clip_filter_kind = match key {
+                Key::Num1 => "audio",
+                Key::Num2 => "midi",
+                Key::Num3 => "video",
+                _ => "groups",
+            }
+            .into();
             app.ui.show_clip_list = true;
             true
         }
@@ -269,7 +281,10 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
             let has_midi = {
                 let s = app.engine.session();
                 s.edit.selected_tracks.iter().any(|id| s.track(*id).is_some_and(|t| t.kind.is_midi()))
-                    || s.edit.selected_clips.iter().any(|id| s.find_clip(*id).is_some_and(|(_, c)| matches!(c.content, soundcraft_model::ClipContent::Midi { .. })))
+                    || s.edit
+                        .selected_clips
+                        .iter()
+                        .any(|id| s.find_clip(*id).is_some_and(|(_, c)| matches!(c.content, soundcraft_model::ClipContent::Midi { .. })))
             };
             let id = if has_midi { "file.print_score" } else { "options.auto_spot_clips" };
             if !crate::menus::invoke_shortcut_dialog(app, id) {
@@ -460,12 +475,7 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         }
         // Pro Tools pastes Clip Effects with the ordinary Cmd/Ctrl+V chord
         // when the Clip Effects clipboard is active.
-        Key::V
-            if m.command
-                && !m.alt
-                && !m.shift
-                && !app.engine.clipboard.clip_effects.is_empty() =>
-        {
+        Key::V if m.command && !m.alt && !m.shift && !app.engine.clipboard.clip_effects.is_empty() => {
             let _ = app.run("edit.paste_clip_effects", json!({}));
             true
         }
@@ -534,9 +544,7 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         }
         // Pro Tools' computer-keyboard tool family (the keypad cannot be separated
         // from the main number row by egui, so these use the application's primary chord).
-        Key::Num1 | Key::Num2 | Key::Num3 | Key::Num5 | Key::Num6 | Key::Num7 | Key::Plus | Key::Equals
-            if mods_match(Modifiers::COMMAND, m, mac) =>
-        {
+        Key::Num1 | Key::Num2 | Key::Num3 | Key::Num5 | Key::Num6 | Key::Num7 | Key::Plus | Key::Equals if mods_match(Modifiers::COMMAND, m, mac) => {
             let tool = match key {
                 Key::Num1 => "zoom",
                 Key::Num2 => "trim",
@@ -551,6 +559,115 @@ fn fixed(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
         }
         _ => fixed_more(app, key, m, mac),
     }
+}
+
+fn is_numpad_key(key: Key) -> bool {
+    matches!(
+        key,
+        Key::Numpad0
+            | Key::Numpad1
+            | Key::Numpad2
+            | Key::Numpad3
+            | Key::Numpad4
+            | Key::Numpad5
+            | Key::Numpad6
+            | Key::Numpad7
+            | Key::Numpad8
+            | Key::Numpad9
+            | Key::NumpadEnter
+            | Key::NumpadAdd
+            | Key::NumpadSubtract
+            | Key::NumpadMultiply
+            | Key::NumpadDivide
+            | Key::NumpadDecimal
+            | Key::NumpadComma
+            | Key::NumpadEquals
+    )
+}
+
+/// Pro Tools Numeric Keypad shortcuts, kept separate from the main number row.
+fn numpad_shortcut(app: &mut SoundApp, key: Key, m: Modifiers, mac: bool) -> bool {
+    let plain = !m.command && !m.alt && !m.ctrl && !m.shift;
+    if plain {
+        match key {
+            Key::Numpad0 => {
+                let _ = app.run("transport.toggle", json!({}));
+                return true;
+            }
+            Key::Numpad1 => {
+                let _ = app.run("transport.rewind", json!({"seconds": 1.0}));
+                return true;
+            }
+            Key::Numpad2 => {
+                let _ = app.run("transport.fast_forward", json!({"seconds": 1.0}));
+                return true;
+            }
+            Key::Numpad3 => {
+                let _ = app.run("transport.record", json!({}));
+                return true;
+            }
+            Key::Numpad4 => {
+                let _ = app.run("options.loop_playback", json!({}));
+                return true;
+            }
+            Key::Numpad5 => {
+                let _ = app.run("options.loop_record", json!({}));
+                return true;
+            }
+            Key::Numpad6 => {
+                let _ = app.run("options.quickpunch", json!({}));
+                return true;
+            }
+            Key::Numpad7 => {
+                let _ = app.run("options.click", json!({}));
+                return true;
+            }
+            Key::Numpad8 => {
+                let _ = app.run("options.countoff", json!({}));
+                return true;
+            }
+            Key::Numpad9 => {
+                let _ = app.run("options.midi_merge", json!({}));
+                return true;
+            }
+            Key::NumpadEnter => {
+                if let Ok(result) = app.run("markers.add", json!({}))
+                    && let Some(id) = result["id"].as_u64()
+                    && let Some(marker) = app.engine.session().markers.iter().find(|mk| mk.id.0 == id)
+                {
+                    app.dialogs.open_rename_marker(marker.id, &marker.name);
+                }
+                return true;
+            }
+            Key::NumpadMultiply => {
+                if app.counter_edit.is_none() {
+                    begin_counter_edit(app);
+                }
+                return true;
+            }
+            Key::NumpadAdd => {
+                let _ = app.run("edit.nudge", json!({"direction": 1}));
+                return true;
+            }
+            Key::NumpadSubtract => {
+                let _ = app.run("edit.nudge", json!({"direction": -1}));
+                return true;
+            }
+            _ => return false,
+        }
+    }
+    if mods_match(Modifiers::COMMAND, m, mac) && !m.alt && !m.shift {
+        let id = match key {
+            Key::Numpad1 => "window.toggle_mix_edit",
+            Key::Numpad2 => "window.session_info",
+            Key::Numpad3 => "window.transport",
+            Key::Numpad5 => "window.memory_locations",
+            _ => return false,
+        };
+        let _ = app.run(id, json!({}));
+        return true;
+    }
+    false
 }
 
 /// Keyboard navigation for the Memory Locations window. The panel already owns
@@ -857,11 +974,7 @@ fn select_adjacent_playlist(app: &mut SoundApp, next: bool) {
 fn cycle_track_views(app: &mut SoundApp, next: bool, all_tracks: bool) {
     let targets: Vec<(u64, String)> = {
         let s = app.engine.session();
-        s.tracks
-            .iter()
-            .filter(|t| all_tracks || s.edit.selected_tracks.contains(&t.id))
-            .map(|t| (t.id.0, t.view.clone()))
-            .collect()
+        s.tracks.iter().filter(|t| all_tracks || s.edit.selected_tracks.contains(&t.id)).map(|t| (t.id.0, t.view.clone())).collect()
     };
     for (id, current) in targets {
         let Some(track) = app.engine.session().track(soundcraft_model::TrackId(id)) else { continue };
@@ -876,11 +989,7 @@ fn cycle_track_views(app: &mut SoundApp, next: bool, all_tracks: bool) {
             views.insert(0, current.as_str());
         }
         let index = views.iter().position(|view| *view == current).unwrap_or(0);
-        let target = if next {
-            views[(index + 1) % views.len()]
-        } else {
-            views[(index + views.len() - 1) % views.len()]
-        };
+        let target = if next { views[(index + 1) % views.len()] } else { views[(index + views.len() - 1) % views.len()] };
         let _ = app.run("track.view", json!({"track": id, "view": target}));
     }
 }
@@ -930,7 +1039,9 @@ fn move_midi_record_enable(app: &mut SoundApp, next: bool) {
     let Some(slot) = midi_tracks.iter().position(|index| *index == current) else { return };
     let target_slot = if next { slot.saturating_add(1).min(midi_tracks.len().saturating_sub(1)) } else { slot.saturating_sub(1) };
     let Some(&target) = midi_tracks.get(target_slot) else { return };
-    if target == current { return; }
+    if target == current {
+        return;
+    }
     let s = app.engine.session_mut();
     s.tracks[current].mixer.record_arm = false;
     s.tracks[target].mixer.record_arm = true;

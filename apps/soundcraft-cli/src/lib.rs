@@ -7,6 +7,7 @@ mod output;
 
 mod app;
 mod args;
+mod ask;
 mod catalog;
 mod convert;
 mod error;
@@ -22,6 +23,7 @@ use clap::CommandFactory;
 
 use app::app;
 use args::{Cli, Command, parse};
+use ask::ask;
 use catalog::{commands, describe, parity};
 use convert::convert;
 use error::CliError;
@@ -71,6 +73,7 @@ fn dispatch(command: Command, out: &mut dyn Write, err: &mut dyn Write) -> Resul
         Command::Commands(a) => commands(&a, out),
         Command::Describe(a) => describe(&a, out)?,
         Command::App(a) => app(&a, out)?,
+        Command::Ask(a) => ask(&a, out, err)?,
         Command::Mcp(a) => mcp(&a, err)?,
         Command::Parity(a) => parity(&a, out)?,
         Command::Plugins => {

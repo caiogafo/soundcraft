@@ -7,6 +7,7 @@ use serde_json::json;
 use soundcraft_model::{ClipId, SourceId};
 
 mod about;
+mod ai_window;
 mod clips;
 mod history;
 mod memory;
@@ -89,6 +90,7 @@ fn gutter_scroll<R>(ui: &Ui, gutter: Rect, out: &egui::scroll_area::ScrollAreaOu
 pub fn floating(app: &mut SoundApp, ctx: &egui::Context) {
     transport_window(app, ctx);
     big_counter(app, ctx);
+    ai_window::ai_window(app, ctx);
     plugin_windows(app, ctx);
     crate::mix_window::send_window(app, ctx);
     about(app, ctx);

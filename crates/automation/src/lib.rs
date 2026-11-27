@@ -11,6 +11,8 @@
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod args;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod gemini;
 pub mod mcp;
 
 use serde_json::{Value, json};

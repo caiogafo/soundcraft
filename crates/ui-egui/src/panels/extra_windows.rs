@@ -13,6 +13,7 @@ const AUTO_UPDATE_SECS: f64 = 2.0;
 #[derive(Debug, Clone)]
 pub struct ExtraState {
     pub show_renderer: bool,
+    pub show_ai_assistant: bool,
     pub show_ui_customization: bool,
     pub auto_update_config: bool,
     pub ui_scale: f32,
@@ -25,6 +26,7 @@ impl Default for ExtraState {
     fn default() -> Self {
         Self {
             show_renderer: false,
+            show_ai_assistant: false,
             show_ui_customization: false,
             auto_update_config: false,
             ui_scale: 1.0,
@@ -43,6 +45,7 @@ pub fn run(app: &mut SoundApp, id: &str, p: &Value) -> Option<Value> {
     };
     Some(match id {
         "window.renderer" => flag(&mut app.extra.show_renderer),
+        "window.ai_assistant" => flag(&mut app.extra.show_ai_assistant),
         "window.ui_customization" => flag(&mut app.extra.show_ui_customization),
         "window.config_auto_update" => flag(&mut app.extra.auto_update_config),
         _ => return None,

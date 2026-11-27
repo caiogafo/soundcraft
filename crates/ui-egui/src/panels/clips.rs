@@ -35,12 +35,15 @@ fn clip_rows(s: &soundcraft_model::Session, needle: &str, kind: &str) -> Vec<Cli
         _ => true,
     };
     // Whole files first (bold), then clips on tracks.
-    let sources =
-        s.sources.iter().enumerate().filter(|(_, src)| source_shown(src) && shown(&format!("{} ({}ch)", src.name, src.channels))).map(|(i, _)| ClipRow::Source(i));
-    let clips =
-        s.tracks.iter().enumerate().flat_map(|(track, tr)| {
-            tr.clips().iter().enumerate().filter(|(_, c)| clip_shown(c) && shown(&c.name)).map(move |(clip, _)| ClipRow::Clip { track, clip })
-        });
+    let sources = s
+        .sources
+        .iter()
+        .enumerate()
+        .filter(|(_, src)| source_shown(src) && shown(&format!("{} ({}ch)", src.name, src.channels)))
+        .map(|(i, _)| ClipRow::Source(i));
+    let clips = s.tracks.iter().enumerate().flat_map(|(track, tr)| {
+        tr.clips().iter().enumerate().filter(|(_, c)| clip_shown(c) && shown(&c.name)).map(move |(clip, _)| ClipRow::Clip { track, clip })
+    });
     sources.chain(clips).collect()
 }
 
@@ -73,7 +76,12 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
     let t = Tokens::current();
     panel_header(ui, "CLIPS");
     let fkey = ui.make_persistent_id("soundcraft.clip_filter");
-    ui.add(egui::TextEdit::singleline(&mut app.ui.clip_filter).id(fkey).hint_text(crate::localization::text("🔍 Find clips")).desired_width(f32::INFINITY));
+    ui.add(
+        egui::TextEdit::singleline(&mut app.ui.clip_filter)
+            .id(fkey)
+            .hint_text(crate::localization::text("🔍 Find clips"))
+            .desired_width(f32::INFINITY),
+    );
     if app.ui.focus_clip_filter {
         ui.ctx().memory_mut(|m| m.request_focus(fkey));
         app.ui.focus_clip_filter = false;
@@ -105,12 +113,26 @@ pub fn clip_list(app: &mut SoundApp, ui: &mut Ui) {
                 .enumerate()
                 .filter_map(|(offset, row)| match *row {
                     ClipRow::Source(i) => s.sources.get(i).map(|src| {
-                        (shown_start + offset, src.id.0, format!("{} ({}ch)", src.name, src.channels), true, [150, 150, 150], s.edit.selected_sources.contains(&src.id))
+                        (
+                            shown_start + offset,
+                            src.id.0,
+                            format!("{} ({}ch)", src.name, src.channels),
+                            true,
+                            [150, 150, 150],
+                            s.edit.selected_sources.contains(&src.id),
+                        )
                     }),
                     ClipRow::Clip { track, clip } => {
                         let tr = s.tracks.get(track)?;
                         let c = tr.clips().get(clip)?;
-                        Some((shown_start + offset, c.id.0, c.name.clone(), false, c.color.unwrap_or(tr.color), s.edit.selected_clips.contains(&c.id)))
+                        Some((
+                            shown_start + offset,
+                            c.id.0,
+                            c.name.clone(),
+                            false,
+                            c.color.unwrap_or(tr.color),
+                            s.edit.selected_clips.contains(&c.id),
+                        ))
                     }
                 })
                 .collect()
@@ -221,10 +243,18 @@ fn select_clip_list_row(app: &mut SoundApp, rows: &[ClipRow], row_index: usize, 
     let s = app.engine.session();
     let anchor = rows.iter().enumerate().find_map(|(index, row)| match *row {
         ClipRow::Source(i) if s.sources.get(i).is_some_and(|source| s.edit.selected_sources.contains(&source.id)) => Some(index),
-        ClipRow::Clip { track, clip } if s.tracks.get(track).and_then(|track| track.clips().get(clip)).is_some_and(|clip| s.edit.selected_clips.contains(&clip.id)) => Some(index),
+        ClipRow::Clip { track, clip }
+            if s.tracks.get(track).and_then(|track| track.clips().get(clip)).is_some_and(|clip| s.edit.selected_clips.contains(&clip.id)) =>
+        {
+            Some(index)
+        }
         _ => None,
     });
-    let range = if mods.shift { anchor.map_or_else(|| row_index..=row_index, |start| start.min(row_index)..=start.max(row_index)) } else { row_index..=row_index };
+    let range = if mods.shift {
+        anchor.map_or_else(|| row_index..=row_index, |start| start.min(row_index)..=start.max(row_index))
+    } else {
+        row_index..=row_index
+    };
     let mut sources = if mods.command { s.edit.selected_sources.clone() } else { Vec::new() };
     let mut clips = if mods.command { s.edit.selected_clips.clone() } else { Vec::new() };
     for row in rows.get(range).into_iter().flatten() {

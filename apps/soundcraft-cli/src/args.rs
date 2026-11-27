@@ -54,6 +54,7 @@ pub(crate) enum Command {
     Commands(CommandsArgs),
     Describe(DescribeArgs),
     App(AppArgs),
+    Ask(AskArgs),
     Mcp(McpArgs),
     Parity(ParityArgs),
     /// List the built-in plugins
@@ -224,6 +225,28 @@ pub(crate) struct McpArgs {
     pub(crate) automation: AutomationArgs,
 }
 
+/// Ask the Gemini AI assistant (`gemini-4-argon` by default) to inspect/edit SoundCraft or analyze audio
+#[derive(Args)]
+pub(crate) struct AskArgs {
+    /// Prompt for the assistant
+    pub(crate) prompt: String,
+    /// Optional audio file for Gemini to listen to and analyze
+    #[arg(long, value_name = "PATH")]
+    pub(crate) audio: Option<PathBuf>,
+    /// Connect to a running SoundCraft app's `--control` port instead of an in-process engine
+    #[arg(long, value_name = "PORT", value_parser = control_target, conflicts_with = "demo")]
+    pub(crate) connect: Option<ControlTarget>,
+    /// Start the in-process engine from the demo session
+    #[arg(long)]
+    pub(crate) demo: bool,
+    /// Gemini model ID
+    #[arg(long, default_value = soundcraft_automation::gemini::DEFAULT_MODEL)]
+    pub(crate) model: String,
+    /// Google Gemini API key (reads GEMINI_API_KEY when omitted)
+    #[arg(long, env = "GEMINI_API_KEY", hide_env_values = true)]
+    pub(crate) api_key: Option<String>,
+}
+
 /// Print the parity report (markdown)
 #[derive(Args)]
 pub(crate) struct ParityArgs {
@@ -249,6 +272,7 @@ impl Command {
             | Self::Commands(_)
             | Self::Describe(_)
             | Self::App(_)
+            | Self::Ask(_)
             | Self::Mcp(_)
             | Self::Parity(_)
             | Self::Plugins => Ok(()),

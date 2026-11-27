@@ -39,6 +39,7 @@ pub fn show(app: &mut SoundApp, ui: &mut Ui) {
                 transport(app, ui);
                 tempo_meter(app, ui);
                 output_meter(app, ui);
+                ai_assistant_button(app, ui);
             });
         });
 }
@@ -751,6 +752,41 @@ fn output_meter(app: &mut SoundApp, ui: &mut Ui) {
         let rr = Rect::from_min_size(pos2(r.min.x + 2.0 + c as f32 * (w + 2.0), r.min.y), vec2(w, r.height()));
         crate::widgets::meter(ui, rr, m.level[c], m.hold[c], m.clip);
     }
+}
+
+/// Draws the AI Assistant toggle button next to the output meters.
+fn ai_assistant_button(app: &mut SoundApp, ui: &mut Ui) {
+    let t = Tokens::current();
+    let active = app.extra.show_ai_assistant;
+    let (r, resp) = ui.allocate_exact_size(vec2(38.0, 28.0), Sense::click());
+    let bg = if active {
+        t.accent.lerp_to_gamma(Color32::BLACK, 0.35)
+    } else if resp.hovered() {
+        t.button_hi
+    } else {
+        t.button
+    };
+    let border = if active { t.accent } else { t.border };
+    ui.painter().rect(r, 4.0, bg, Stroke::new(1.0, border), egui::StrokeKind::Inside);
+    // 4-point sparkle icon drawn in code.
+    let c = pos2(r.min.x + 11.0, r.center().y);
+    let color = if active { Color32::WHITE } else { t.accent };
+    let pts = [
+        pos2(c.x, c.y - 5.5),
+        pos2(c.x + 1.8, c.y - 1.8),
+        pos2(c.x + 5.5, c.y),
+        pos2(c.x + 1.8, c.y + 1.8),
+        pos2(c.x, c.y + 5.5),
+        pos2(c.x - 1.8, c.y + 1.8),
+        pos2(c.x - 5.5, c.y),
+        pos2(c.x - 1.8, c.y - 1.8),
+    ];
+    ui.painter().add(egui::Shape::convex_polygon(pts.to_vec(), color, Stroke::NONE));
+    ui.painter().text(pos2(r.min.x + 20.0, r.center().y), Align2::LEFT_CENTER, "AI", bold(11.0), if active { Color32::WHITE } else { t.text });
+    if resp.clicked() {
+        app.extra.show_ai_assistant = !app.extra.show_ai_assistant;
+    }
+    resp.on_hover_text("AI Assistant (gemini-4-argon)");
 }
 
 #[cfg(test)]

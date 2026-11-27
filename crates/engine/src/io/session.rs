@@ -1,10 +1,8 @@
 use super::bundle::save_session_bundle;
 #[cfg(test)]
 use super::import::add_source;
-use super::import::{MAX_IMPORT_SAMPLES, at_rate, relink_videos};
-use super::{
-    Arc, Engine, EngineError, OsStr, Path, PathBuf, Result, Session, SourceAudio, file_key, read_file, read_session_text, stored_path, write_session,
-};
+use super::import::{MAX_IMPORT_SAMPLES, at_rate, available_sample_budget, decode_opened_file_streaming, relink_videos};
+use super::{Arc, Engine, EngineError, Path, PathBuf, Result, Session, SourceAudio, file_key, read_session_text, stored_path, write_session};
 
 /// Save the session to `path` (a `.scraft` file). Audio that only exists in memory is written
 /// as 32-bit float WAV into `Audio Files/` next to it. Returns how many audio files were written.
@@ -49,9 +47,19 @@ pub(crate) fn open_session_linked(e: &mut Engine, path: &Path, links: &Path) -> 
     let dir = path.parent().map(Path::to_path_buf).unwrap_or_default();
     let mut missing = Vec::new();
     let mut files = DecodedFiles::new();
+    let mut remaining_budget = available_sample_budget().min(MAX_IMPORT_SAMPLES);
     for src in &s.sources {
-        let decoded =
-            stored_path(&src.path, links).map_err(|why| format!("{}: {why}", src.path)).and_then(|p| decode_file(&mut files, &p, s.sample_rate.hz()));
+        let key_path = stored_path(&src.path, links).map_err(|why| format!("{}: {why}", src.path));
+        let decoded = key_path.and_then(|p| {
+            let key = file_key(&p);
+            let already_cached = files.contains_key(&key);
+            let audio = decode_file_with_budget(&mut files, &p, s.sample_rate.hz(), remaining_budget)?;
+            if !already_cached {
+                let used = audio.frames().saturating_mul(usize::from(audio.buffer.num_channels()));
+                remaining_budget = remaining_budget.saturating_sub(used);
+            }
+            Ok(audio)
+        });
         match decoded {
             Ok(audio) => s.pool.insert(src.id, audio),
             Err(err) => missing.push(err),
@@ -71,25 +79,38 @@ pub(crate) fn open_session_linked(e: &mut Engine, path: &Path, links: &Path) -> 
 
 /// Decode one source's audio file at the session rate.
 pub(super) fn decode_source(bytes: &[u8], ext: Option<&str>, rate: u32) -> std::result::Result<Arc<SourceAudio>, String> {
-    let (_, buf) = craft_audio::decode(bytes, ext).map_err(|err| err.to_string())?;
-    let buf = at_rate(buf, rate, MAX_IMPORT_SAMPLES).map_err(|e| e.message("too large to load"))?;
+    let budget = available_sample_budget().min(MAX_IMPORT_SAMPLES);
+    let opts = craft_audio::DecodeOptions::default().with_max_samples(budget as u64);
+    let (_, buf) = craft_audio::decode_with(bytes, ext, &opts).map_err(|err| err.to_string())?;
+    let buf = at_rate(buf, rate, budget).map_err(|e| e.message("too large to load"))?;
     Ok(Arc::new(SourceAudio::new(buf)))
 }
 
 pub(crate) type DecodedFiles = std::collections::HashMap<PathBuf, std::result::Result<Arc<SourceAudio>, String>>;
 
-/// The audio of the file at `p` at `rate`, decoded the first time it is asked for. The error
-/// names the file.
+/// The audio of the file at `p` at `rate`, stream-decoded the first time it is asked for. The
+/// error names the file.
 /// A file named in a session is hostile input too: a path that leaves the read root is not read.
 pub(crate) fn decode_file(files: &mut DecodedFiles, p: &Path, rate: u32) -> std::result::Result<Arc<SourceAudio>, String> {
+    let budget = available_sample_budget().min(MAX_IMPORT_SAMPLES);
+    decode_file_with_budget(files, p, rate, budget)
+}
+
+fn decode_file_with_budget(files: &mut DecodedFiles, p: &Path, rate: u32, budget: usize) -> std::result::Result<Arc<SourceAudio>, String> {
     crate::file_access::check_read(p)?;
-    files
-        .entry(file_key(p))
-        .or_insert_with(|| {
-            let bytes = read_file(p).map_err(|_| p.display().to_string())?;
-            decode_source(&bytes, p.extension().and_then(OsStr::to_str), rate).map_err(|err| format!("{}: {err}", p.display()))
-        })
-        .clone()
+    let key = file_key(p);
+    if let Some(cached) = files.get(&key) {
+        return cached.clone();
+    }
+    let decoded = match super::open_file_read(p) {
+        Ok(file) => decode_opened_file_streaming(file, p, budget)
+            .and_then(|(_, buf)| at_rate(buf, rate, budget).map_err(|e| e.message("too large to load")))
+            .map(|buf| Arc::new(SourceAudio::new(buf)))
+            .map_err(|err| format!("{}: {err}", p.display())),
+        Err(_) => Err(p.display().to_string()),
+    };
+    files.insert(key, decoded.clone());
+    decoded
 }
 
 #[cfg(test)]

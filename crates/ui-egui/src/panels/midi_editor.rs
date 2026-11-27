@@ -432,7 +432,16 @@ fn note_pointer(app: &mut SoundApp, ui: &mut Ui, g: &Roll<'_>, cid: ClipId, penc
 fn note_keys(app: &mut SoundApp, ui: &mut Ui, g: &Roll<'_>, cid: ClipId) {
     let Roll { sequence, roll, grid_ticks, .. } = *g;
     if ui.rect_contains_pointer(roll) && !ui.ctx().egui_wants_keyboard_input() {
-        let input = ui.input(|i| (i.modifiers, i.key_pressed(egui::Key::A), i.key_pressed(egui::Key::ArrowUp), i.key_pressed(egui::Key::ArrowDown), i.key_pressed(egui::Key::ArrowLeft), i.key_pressed(egui::Key::ArrowRight)));
+        let input = ui.input(|i| {
+            (
+                i.modifiers,
+                i.key_pressed(egui::Key::A),
+                i.key_pressed(egui::Key::ArrowUp),
+                i.key_pressed(egui::Key::ArrowDown),
+                i.key_pressed(egui::Key::ArrowLeft),
+                i.key_pressed(egui::Key::ArrowRight),
+            )
+        });
         let (mods, all, up, down, left, right) = input;
         if all {
             app.midi.selected = (0..sequence.notes.len()).collect();
@@ -484,10 +493,17 @@ fn move_selected_notes(app: &mut SoundApp, cid: ClipId, semitones: i64, ticks: i
 
 fn change_selected_velocity(app: &mut SoundApp, cid: ClipId, delta: i64) {
     let selected = app.midi.selected.clone();
-    let notes = app.engine.session().find_clip(cid).and_then(|(_, c)| match &c.content {
-        ClipContent::Midi { sequence } => Some(selected.iter().filter_map(|i| sequence.notes.get(*i).map(|n| (*i, n.velocity))).collect::<Vec<_>>()),
-        _ => None,
-    }).unwrap_or_default();
+    let notes = app
+        .engine
+        .session()
+        .find_clip(cid)
+        .and_then(|(_, c)| match &c.content {
+            ClipContent::Midi { sequence } => {
+                Some(selected.iter().filter_map(|i| sequence.notes.get(*i).map(|n| (*i, n.velocity))).collect::<Vec<_>>())
+            }
+            _ => None,
+        })
+        .unwrap_or_default();
     for (index, velocity) in notes {
         let _ = app.run("midi.note_edit", json!({"clip": cid.0, "index": index, "velocity": i64::from(velocity) + delta}));
     }
@@ -496,10 +512,17 @@ fn change_selected_velocity(app: &mut SoundApp, cid: ClipId, delta: i64) {
 fn trim_selected_notes(app: &mut SoundApp, cid: ClipId, left: bool, end: bool, next_value: bool, grid_ticks: i64) {
     let step = grid_ticks.saturating_mul(if next_value { 2 } else { 1 }).max(1);
     let selected = app.midi.selected.clone();
-    let notes = app.engine.session().find_clip(cid).and_then(|(_, c)| match &c.content {
-        ClipContent::Midi { sequence } => Some(selected.iter().filter_map(|i| sequence.notes.get(*i).map(|n| (*i, n.start, n.length))).collect::<Vec<_>>()),
-        _ => None,
-    }).unwrap_or_default();
+    let notes = app
+        .engine
+        .session()
+        .find_clip(cid)
+        .and_then(|(_, c)| match &c.content {
+            ClipContent::Midi { sequence } => {
+                Some(selected.iter().filter_map(|i| sequence.notes.get(*i).map(|n| (*i, n.start, n.length))).collect::<Vec<_>>())
+            }
+            _ => None,
+        })
+        .unwrap_or_default();
     for (index, start, length) in notes {
         let (start_ticks, length_ticks) = if end {
             (start, if left { length.saturating_sub(step).max(1) } else { length.saturating_add(step) })
@@ -523,7 +546,9 @@ fn select_adjacent_note(app: &mut SoundApp, sequence: &soundcraft_midi::Sequence
     };
     if let Some(i) = candidate {
         if add {
-            if !app.midi.selected.contains(&i) { app.midi.selected.push(i); }
+            if !app.midi.selected.contains(&i) {
+                app.midi.selected.push(i);
+            }
         } else {
             app.midi.selected = vec![i];
         }

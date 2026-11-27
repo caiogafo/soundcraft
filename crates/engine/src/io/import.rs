@@ -1,11 +1,88 @@
 use super::render::sanitize_name;
 use super::{
     Arc, AudioBuffer, ChannelFormat, Clip, Engine, EngineError, FileFormat, OsStr, Path, PathBuf, Result, Samples, Session, Source, SourceAudio,
-    SourceId, TrackId, TrackKind, Value, file_found, file_key, json, read_file, stored_path,
+    SourceId, TrackId, TrackKind, Value, file_found, file_key, json, stored_path,
 };
 
 /// Largest import we accept (samples per channel × channels), ~4 GiB of f32.
 pub(crate) const MAX_IMPORT_SAMPLES: usize = 1 << 30;
+
+/// Parse `MemAvailable: <kb> kB` from Linux `/proc/meminfo`.
+pub(crate) fn parse_meminfo_available_kb(text: &str) -> Option<u64> {
+    for line in text.lines() {
+        if let Some(rest) = line.strip_prefix("MemAvailable:") {
+            let kb = rest.split_whitespace().next()?.parse::<u64>().ok()?;
+            return Some(kb);
+        }
+    }
+    None
+}
+
+/// Minimum `MemAvailable` (2 GiB) kept free on Linux so the UI, GPU and OS never thrash swap.
+#[cfg(target_os = "linux")]
+const LINUX_MEM_RESERVE_KB: u64 = 2 * 1024 * 1024;
+
+/// Maximum `f32` samples we should allow a new audio source to allocate without risking a Linux
+/// OOM kill or swap thrashing: half of `(MemAvailable - 2 GiB)`, capped at [`MAX_IMPORT_SAMPLES`].
+/// On non-Linux targets or if `/proc/meminfo` cannot be read, returns [`MAX_IMPORT_SAMPLES`].
+pub(crate) fn available_sample_budget() -> usize {
+    #[cfg(target_os = "linux")]
+    if let Ok(text) = std::fs::read_to_string("/proc/meminfo")
+        && let Some(kb) = parse_meminfo_available_kb(&text)
+    {
+        let usable_kb = kb.saturating_sub(LINUX_MEM_RESERVE_KB);
+        // usable_kb * 1024 bytes / 2 (50% headroom) / 4 bytes per f32 = usable_kb * 128 samples.
+        let samples = usable_kb.saturating_mul(128);
+        return usize::try_from(samples).unwrap_or(MAX_IMPORT_SAMPLES).min(MAX_IMPORT_SAMPLES);
+    }
+    MAX_IMPORT_SAMPLES
+}
+
+/// Stream-decodes an already-opened regular audio file from disk without holding the raw encoded
+/// bytes in memory at the same time as the decoded `f32` buffer, refusing files that exceed `max_samples`.
+pub(crate) fn decode_opened_file_streaming(
+    file: std::fs::File,
+    path: &Path,
+    max_samples: usize,
+) -> std::result::Result<(craft_audio::AudioInfo, AudioBuffer), String> {
+    let ext = path.extension().and_then(OsStr::to_str).map(str::to_ascii_lowercase);
+    let opts = craft_audio::DecodeOptions::default().with_max_samples(max_samples as u64);
+    let mut dec = craft_audio::Decoder::open(file, ext.as_deref(), &opts).map_err(|e| e.to_string())?;
+    let declared = dec.info().frames.saturating_mul(u64::from(dec.info().channels.max(1)));
+    if dec.length_known() && declared > opts.max_samples {
+        let need_mib = declared.saturating_mul(4) / (1024 * 1024);
+        let avail_mib = opts.max_samples.saturating_mul(4) / (1024 * 1024);
+        return Err(format!("not enough free memory to load ({need_mib} MiB needed, {avail_mib} MiB budget)"));
+    }
+    let mut planar: Vec<Vec<f32>> = Vec::new();
+    let mut frames: u64 = 0;
+    while let Some(block) = dec.next_block().map_err(|e| e.to_string())? {
+        if planar.is_empty() {
+            planar = vec![Vec::new(); block.channels.len()];
+        }
+        let n_ch = planar.len();
+        let block_frames = block.frames();
+        frames = frames.saturating_add(block_frames as u64);
+        if frames.saturating_mul(n_ch as u64) > opts.max_samples {
+            return Err("not enough free memory to load decoded audio".into());
+        }
+        for (ch_idx, dst) in planar.iter_mut().enumerate() {
+            dst.try_reserve(block_frames).map_err(|_| "not enough free memory to allocate decoded audio".to_string())?;
+            if let Some(src) = block.channels.get(ch_idx).filter(|_| block.channels.len() == n_ch) {
+                dst.extend_from_slice(src);
+            } else {
+                dst.resize(dst.len() + block_frames, 0.0);
+            }
+        }
+    }
+    let mut info = dec.info().clone();
+    if planar.is_empty() {
+        planar = vec![Vec::new(); usize::from(info.channels)];
+    }
+    info.frames = planar.iter().map(Vec::len).min().unwrap_or(0) as u64;
+    let sample_rate = info.sample_rate;
+    Ok((info, AudioBuffer { sample_rate, channels: planar }))
+}
 
 /// The most a file's audio may grow when converted to the session rate. Sessions run at 8 kHz to
 /// 768 kHz (96×); past this a file is lying about its rate, and converting a few kilobytes would
@@ -133,13 +210,20 @@ impl DecodedImport {
     }
 }
 
-/// Reads and decodes the audio file at `path` for a session at `rate`. Thread-safe and slow (the
-/// whole file is read, decoded, resampled and given peaks): run it off the UI thread.
+/// Stream-decodes the audio file at `path` for a session at `rate` without holding the raw file
+/// bytes in memory alongside the decoded buffer. Thread-safe and slow: run it off the UI thread.
 pub fn decode_import(path: &str, rate: u32) -> Result<DecodedImport> {
-    let bytes = read_file(path)?;
-    let name = Path::new(path).file_name().and_then(OsStr::to_str).unwrap_or("Audio");
-    let (info, audio) = decode_import_bytes(name, &bytes, rate)?;
-    Ok(DecodedImport { key: file_key(Path::new(path)), rate, info, audio })
+    let p = Path::new(path);
+    let name = p.file_name().and_then(OsStr::to_str).unwrap_or("Audio");
+    let file = super::open_file_read(p)?;
+    let budget = available_sample_budget().min(MAX_IMPORT_SAMPLES);
+    let (info, buf) = decode_opened_file_streaming(file, p, budget).map_err(|err| EngineError::Io(format!("{name}: {err}")))?;
+    let buf = at_rate(buf, rate, budget).map_err(|e| EngineError::Io(format!("{name}: {}", e.message("file is too large to import"))))?;
+    if buf.frames() == 0 {
+        return Err(EngineError::Io(format!("{name}: no audio")));
+    }
+    let audio = Arc::new(SourceAudio::new(buf));
+    Ok(DecodedImport { key: file_key(p), rate, info, audio })
 }
 
 fn decode_import_bytes(name: &str, bytes: &[u8], rate: u32) -> Result<(craft_audio::AudioInfo, Arc<SourceAudio>)> {
@@ -268,5 +352,31 @@ mod rate_tests {
         // a short file that is only over the sample budget is a size refusal, not a rate one
         assert_eq!(at_rate(buf(48_000), 48_000, 10).unwrap_err(), RateError::TooLarge);
         assert!(RateError::Ratio { from: 300, to: 192_000 }.message("big").contains("300 Hz"));
+    }
+
+    #[test]
+    fn meminfo_parser_reads_mem_available_kb() {
+        let sample = "MemTotal:       16384000 kB\nMemFree:         1234567 kB\nMemAvailable:    4194304 kB\nBuffers:          100000 kB\n";
+        assert_eq!(parse_meminfo_available_kb(sample), Some(4_194_304));
+        assert_eq!(parse_meminfo_available_kb("MemTotal: 100 kB\n"), None);
+    }
+
+    #[test]
+    fn streaming_decoder_refuses_files_over_budget_without_oom() {
+        let dir = std::env::temp_dir().join(format!("soundcraft-stream-budget-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let wav_path = dir.join("tone.wav");
+        let wav = craft_audio::encode(&AudioBuffer::new(48_000, 2, 1000), &craft_audio::EncodeOptions::default()).unwrap();
+        std::fs::write(&wav_path, wav).unwrap();
+        // 2 * 1000 = 2000 samples > 500 budget -> refused cleanly before allocating.
+        let file = crate::io::open_file_read(&wav_path).unwrap();
+        let err = decode_opened_file_streaming(file, &wav_path, 500).unwrap_err();
+        assert!(err.contains("not enough free memory"), "unexpected error: {err}");
+        // Within budget -> decodes accurately.
+        let file = crate::io::open_file_read(&wav_path).unwrap();
+        let (info, buf) = decode_opened_file_streaming(file, &wav_path, 10_000).unwrap();
+        assert_eq!((info.sample_rate, buf.num_channels(), buf.frames()), (48_000, 2, 1000));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
